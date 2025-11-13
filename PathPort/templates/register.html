@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page">
+    <div class="register-container fade-in">
+        <div class="register-header">
+            <h2><i class="fas fa-user-plus"></i> Join PathPort</h2>
+            <p>Create your account and start your journey</p>
+        </div>
+        <div class="register-body">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-error">
+                            <i class="fas fa-exclamation-triangle"></i> {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" id="registerForm">
+                <div class="form-group">
+                    <label for="name">
+                        <i class="fas fa-user"></i> Full Name
+                    </label>
+                    <input type="text" class="form-control" id="name" name="name" 
+                           placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" class="form-control" id="email" name="email" 
+                           placeholder="Enter your email address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">
+                        <i class="fas fa-phone"></i> Phone Number
+                    </label>
+                    <input type="tel" class="form-control" id="phone" name="phone" 
+                           placeholder="+91-XXXXXXXXXX" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="role">
+                        <i class="fas fa-user-tag"></i> I want to register as
+                    </label>
+                    <select class="form-control" id="role" name="role" required>
+                        <option value="">Select Your Role</option>
+                        <option value="sender">
+                            <i class="fas fa-paper-plane"></i> Parcel Sender - Send parcels with ease
+                        </option>
+                        <option value="delivery_partner">
+                            <i class="fas fa-truck"></i> Delivery Partner - Earn while you commute
+                        </option>
+                    </select>
+                    <small style="color: var(--accent-green); margin-top: 0.5rem; display: block;">
+                        <span id="roleDescription"></span>
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" class="form-control" id="password" name="password" 
+                           placeholder="Create a strong password" required minlength="6">
+                    <small style="color: var(--accent-green); margin-top: 0.5rem; display: block;">
+                        Password must be at least 6 characters long
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">
+                        <i class="fas fa-lock"></i> Confirm Password
+                    </label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
+                           placeholder="Confirm your password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="terms" required>
+                        <span>I agree to PathPort's <a href="#" style="color: var(--primary-green);">Terms & Conditions</a> and <a href="#" style="color: var(--primary-green);">Privacy Policy</a></span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-rocket"></i> Create Account
+                </button>
+            </form>
+        </div>

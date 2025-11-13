@@ -1,0 +1,9 @@
+# requirements.txt - PathPort Delivery Platform
+Flask==2.3.3
+pymongo==4.5.0
+Werkzeug==2.3.7
+# Note: Do NOT install separate 'bson' package as it conflicts with pymongo's built-in bson
+
+# Optional: For enhanced functionality
+python-dotenv==1.0.0  # For environment variables
+requests==2.31.0      # For API calls (Google Maps, etc.)

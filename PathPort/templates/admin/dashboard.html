@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>Admin Panel</p>
+        </div>
+        <!-- Update the sidebar menu links -->
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('admin_dashboard') }}" class="active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('admin_users') }}">
+                <i class="fas fa-users"></i> User Management
+            </a></li>
+            <li><a href="{{ url_for('admin_orders') }}">
+                <i class="fas fa-box"></i> Order Monitoring
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header fade-in">
+            <div>
+                <h1>Admin Dashboard</h1>
+                <p>Welcome back! Here's what's happening with PathPort today.</p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+               
+                <!-- Update the export report button -->
+                
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Statistics Cards -->
+        <div class="stats-grid">
+    <div class="stat-card fade-in">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-number">{{ dashboard_data.stats.total_users }}</div>
+        <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card fade-in" style="animation-delay: 0.1s">
+        <div class="stat-icon">
+            <i class="fas fa-box"></i>
+        </div>
+        <div class="stat-number">{{ dashboard_data.stats.active_parcels }}</div>
+        <div class="stat-label">Active Parcels</div>
+    </div>
+    <div class="stat-card fade-in" style="animation-delay: 0.2s">
+        <div class="stat-icon">
+            <i class="fas fa-truck"></i>
+        </div>
+        <div class="stat-number">{{ dashboard_data.stats.active_drivers }}</div>
+        <div class="stat-label">Active Drivers</div>
+    </div>
+</div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card fade-in">
+                    <h3><i class="fas fa-chart-line"></i> Delivery Analytics</h3>
+                    <div class="chart-container">
+                        <canvas id="deliveryChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card fade-in">
+                    <h3><i class="fas fa-chart-pie"></i> User Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="userChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="{{ url_for('admin_users') }}" class="action-card fade-in">
+                    <i class="fas fa-user-plus"></i>
+                    <h3>Manage Users</h3>
+                    <p>View and manage all registered users</p>
+                </a>
+                <a href="{{ url_for('admin_orders') }}" class="action-card fade-in">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>Monitor Orders</h3>
+                    <p>Track all parcel deliveries in real-time</p>
+                </a>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity fade-in">
+                <h3 style="color: var(--primary-green); margin-bottom: 1.5rem;">
+                    <i class="fas fa-clock"></i> Recent Activity
+                </h3>
+                <div class="activity-item">
+                    <div class="activity-icon user">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h4>New user registered</h4>
+                        <p>Priya Sharma joined as a delivery partner</p>
+                    </div>
+                    <div class="activity-time">2 mins ago</div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon parcel">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h4>Parcel delivered</h4>
+                        <p>Package #PK12345 successfully delivered to Andheri</p>
+                    </div>
+                    <div class="activity-time">5 mins ago</div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon delivery">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h4>Route updated</h4>
+                        <p>New route added: Bandra to Powai</p>
+                    </div>
+                    <div class="activity-time">12 mins ago</div>
+                </div>
+            </div>
+        </div>
+    </div>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+    // Safely pass all dashboard data from Flask to JavaScript
+    const dashboardData = JSON.parse('{{ dashboard_data | tojson | safe }}');
+
+    // --- Delivery Analytics Chart ---
+    const deliveryCtx = document.getElementById('deliveryChart').getContext('2d');
+    new Chart(deliveryCtx, {
+        type: 'line',
+        data: {
+            labels: dashboardData.deliveryChart.labels,
+            datasets: [{
+                label: 'Deliveries Completed',
+                data: dashboardData.deliveryChart.completed,
+                borderColor: '#2d5a27',
+                backgroundColor: 'rgba(45, 90, 39, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'New Orders',
+                data: dashboardData.deliveryChart.new_orders,
+                borderColor: '#4a7c59',
+                backgroundColor: 'rgba(74, 124, 89, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // --- User Distribution Chart ---
+    const userCtx = document.getElementById('userChart').getContext('2d');
+    new Chart(userCtx, {
+        type: 'doughnut',
+        data: {
+            labels: dashboardData.userChart.labels,
+            datasets: [{
+                data: dashboardData.userChart.data,
+                backgroundColor: ['#2d5a27', '#4a7c59'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Parcel - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.user_name }}</p>
+            <small>Parcel Sender</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('sender_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('create_parcel') }}" class="active">
+                <i class="fas fa-plus"></i> Create Parcel
+            </a></li>
+            <li><a href="{{ url_for('track_parcel') }}">
+                <i class="fas fa-map-marker-alt"></i> Track Parcels
+            </a></li>
+            <li><a href="{{ url_for('sender_profile') }}">
+                <i class="fas fa-user"></i> My Profile
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <div>
+                <h1>Create New Parcel</h1>
+                <p>Fill in the details to create a new parcel delivery request</p>
+            </div>
+            <a href="{{ url_for('sender_dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-box"></i> Parcel Information</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Update the form tag to include enctype -->
+                    <form method="POST" id="parcelForm" enctype="multipart/form-data">
+                        <div class="form-grid">
+                            <div>
+                                <div class="form-group">
+                                    <label for="title">
+                                        <i class="fas fa-tag"></i> Parcel Title *
+                                    </label>
+                                    <input type="text" class="form-control" id="title" name="title" required 
+                                           placeholder="e.g., Documents, Electronics, Books">
+                                    <small class="text-muted">Brief description of your parcel contents</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="description">
+                                        <i class="fas fa-align-left"></i> Description
+                                    </label>
+                                    <textarea class="form-control" id="description" name="description" rows="3" 
+                                              placeholder="Additional details about the parcel (optional)"></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="weight">
+                                        <i class="fas fa-weight-hanging"></i> Weight (kg) *
+                                    </label>
+                                    <input type="number" class="form-control" id="weight" name="weight" 
+                                           step="0.1" min="0.1" max="25" required>
+                                    <small class="text-muted">Maximum weight: 25kg</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="size">
+                                        <i class="fas fa-expand-arrows-alt"></i> Size Category *
+                                    </label>
+                                    <select class="form-control" id="size" name="size" required>
+                                        <option value="">Select Size</option>
+                                        <option value="small">Small (envelope/document)</option>
+                                        <option value="medium">Medium (shoe box size)</option>
+                                        <option value="large">Large (briefcase size)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="form-group">
+                                    <label for="pickup_location">
+                                        <i class="fas fa-map-marker-alt text-success"></i> Pickup Location *
+                                    </label>
+                                    <input type="text" class="form-control" id="pickup_location" name="pickup_location" 
+                                           required placeholder="Enter pickup address">
+                                    <small class="text-muted">Where should the delivery partner pick up your parcel?</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="delivery_location">
+                                        <i class="fas fa-flag-checkered text-danger"></i> Delivery Location *
+                                    </label>
+                                    <input type="text" class="form-control" id="delivery_location" name="delivery_location" 
+                                           required placeholder="Enter delivery address">
+                                    <small class="text-muted">Where should your parcel be delivered?</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="urgency">
+                                        <i class="fas fa-clock"></i> Urgency Level *
+                                    </label>
+                                    <select class="form-control" id="urgency" name="urgency" required>
+                                        <option value="">Select Urgency</option>
+                                        <option value="normal">Normal (2-3 days)</option>
+                                        <option value="urgent">Urgent (Same day)</option>
+                                        <option value="express">Express (Within 2 hours)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="reward_points">
+                                        <i class="fas fa-star"></i> Reward Points
+                                    </label>
+                                    <input type="number" class="form-control" id="reward_points" name="reward_points" 
+                                           min="5" max="50" value="10" placeholder="Points to reward delivery partner">
+                                    <small class="text-muted">Points awarded to the delivery partner (5-50 points)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div>
+                                <div class="form-group">
+                                    <label for="parcel_image">
+                                        <i class="fas fa-camera"></i> Parcel Photo
+                                    </label>
+                                    <div class="image-upload-container">
+                                        <input type="file" class="form-control" id="parcel_image" name="parcel_image" 
+                                               accept="image/*" onchange="previewImage(event)">
+                                        <div id="image-preview" class="image-preview">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <p>Click to upload or drag and drop</p>
+                                            <small class="text-muted">Supported formats: JPG, PNG (max 5MB)</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="pickup_otp">
+                                        <i class="fas fa-key"></i> Pickup OTP
+                                    </label>
+                                    <div class="otp-container">
+                                        <input type="text" class="form-control otp-input" id="pickup_otp" name="pickup_otp" 
+                                               readonly value="{{ pickup_otp }}">
+                                        <button type="button" class="btn btn-outline" onclick="regenerateOTP()">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Share this OTP with delivery partner during pickup</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Add this in your form after delivery location -->
+                        <div class="form-group">
+                            <h3>Receiver Details</h3>
+                            <div class="form-grid">
+                                <div>
+                                    <label for="receiver_name">Receiver Name</label>
+                                    <input type="text" id="receiver_name" name="receiver_name" class="form-control" required>
+                                </div>
+                                <div>
+                                    <label for="receiver_phone">Receiver Phone</label>
+                                    <input type="tel" id="receiver_phone" name="receiver_phone" class="form-control" required>
+                                </div>
+                                <div>
+                                    <label for="receiver_email">Receiver Email</label>
+                                    <input type="email" id="receiver_email" name="receiver_email" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card" style="background: var(--bg-light); margin-top: 2rem;">
+                            <div class="card-body">
+                                <h4><i class="fas fa-info-circle text-info"></i> Important Guidelines</h4>
+                                <ul style="margin: 1rem 0; padding-left: 2rem;">
+                                    <li>Ensure all details are accurate before submitting</li>
+                                    <li>Prohibited items: Hazardous materials, fragile items without proper packaging, perishables</li>
+                                    <li>Make sure someone is available at both pickup and delivery locations</li>
+                                    <li>Provide clear instructions for hard-to-find locations</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane"></i> Create Parcel Request
+                            </button>
+                            <a href="{{ url_for('sender_dashboard') }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                {% for message in messages %}
+                    <div class="alert alert-success fade-in">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Form validation and dynamic features
+        document.getElementById('parcelForm').addEventListener('submit', function(e) {
+            const requiredFields = ['title', 'pickup_location', 'delivery_location', 'weight', 'size', 'urgency'];
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field);
+                if (!element.value.trim()) {
+                    isValid = false;
+                    element.style.borderColor = 'var(--danger)';
+                    element.addEventListener('input', () => {
+                        element.style.borderColor = '';
+                    }, { once: true });
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Add loading state
+            const submitBtn = document.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Parcel...';
+            submitBtn.disabled = true;
+        });
+
+        // Urgency level descriptions
+        const urgencyDescriptions = {
+            'normal': 'Standard delivery within 2-3 days',
+            'urgent': 'Priority delivery on the same day',
+            'express': 'Express delivery within 2 hours'
+        };
+
+        document.getElementById('urgency').addEventListener('change', function() {
+            const description = urgencyDescriptions[this.value] || '';
+            const small = this.parentNode.querySelector('small') || document.createElement('small');
+            small.className = 'text-muted';
+            small.textContent = description;
+            if (!this.parentNode.querySelector('small')) {
+                this.parentNode.appendChild(small);
+            }
+        });
+
+        // Weight-based suggestions
+        document.getElementById('weight').addEventListener('input', function() {
+            const weight = parseFloat(this.value);
+            const sizeSelect = document.getElementById('size');
+            
+            if (weight > 0 && weight <= 1) {
+                sizeSelect.value = 'small';
+            } else if (weight > 1 && weight <= 10) {
+                sizeSelect.value = 'medium';
+            } else if (weight > 10) {
+                sizeSelect.value = 'large';
+            }
+        });
+
+        // Location suggestions (mock implementation)
+        const locationInputs = ['pickup_location', 'delivery_location'];
+        locationInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            input.addEventListener('input', function() {
+                // In a real app, this would connect to a location API
+                if (this.value.length > 2) {
+                    // Mock suggestions
+                    console.log(`Searching locations for: ${this.value}`);
+                }
+            });
+        });
+
+        // Reward points calculation based on urgency
+        document.getElementById('urgency').addEventListener('change', function() {
+            const rewardInput = document.getElementById('reward_points');
+            if (this.value === 'express') {
+                rewardInput.value = 25;
+            } else if (this.value === 'urgent') {
+                rewardInput.value = 15;
+            } else {
+                rewardInput.value = 10;
+            }
+        });
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+
+        // Form field animations
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentNode.querySelector('label').style.color = 'var(--primary-green)';
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentNode.querySelector('label').style.color = '';
+                this.style.transform = '';
+            });
+        });
+
+        // Image preview function
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const previewContainer = document.getElementById('image-preview');
+            
+            if (file) {
+                // Check file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    event.target.value = '';
+                    return;
+                }
+
+                // Check file type
+                if (!file.type.match('image.*')) {
+                    alert('Only image files are allowed');
+                    event.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.innerHTML = `
+                        <img src="${e.target.result}" class="img-preview" alt="Preview">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeImage()">
+                            <i class="fas fa-times"></i> Remove
+                        </button>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Add function to remove image
+        function removeImage() {
+            const imageInput = document.getElementById('parcel_image');
+            const previewContainer = document.getElementById('image-preview');
+            
+            imageInput.value = '';
+            previewContainer.innerHTML = `
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload or drag and drop</p>
+                <small class="text-muted">Supported formats: JPG, PNG (max 5MB)</small>
+            `;
+        }
+
+        // Regenerate OTP function
+        function regenerateOTP() {
+            const otpInput = document.getElementById('pickup_otp');
+            fetch('/generate_otp')  // You'll need to create this endpoint
+                .then(response => response.json())
+                .then(data => {
+                    otpInput.value = data.otp;
+                    otpInput.style.transform = 'scale(1.1)';
+                    setTimeout(() => otpInput.style.transform = '', 200);
+                });
+        }
+
+        // Add drag and drop support
+        const imagePreview = document.getElementById('image-preview');
+        const imageInput = document.getElementById('parcel_image');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            imagePreview.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            imagePreview.addEventListener(eventName, () => {
+                imagePreview.parentElement.style.borderColor = 'var(--primary-green)';
+                imagePreview.parentElement.style.background = 'rgba(45, 90, 39, 0.05)';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            imagePreview.addEventListener(eventName, () => {
+                imagePreview.parentElement.style.borderColor = 'var(--light-green)';
+                imagePreview.parentElement.style.background = '';
+            });
+        });
+
+        imagePreview.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            imageInput.files = dt.files;
+            previewImage({ target: { files: [file] } });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathPort - AI-Enabled Crowdsourced Parcel Delivery</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('index') }}" class="brand">
+                <i class="fas fa-shipping-fast"></i> PathPort
+            </a>
+            <button class="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+                <li><a href="{{ url_for('register') }}">Register</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <h1 class="fade-in">AI-Enabled Crowdsourced Parcel Delivery</h1>
+            <p class="fade-in">Connect with commuters and deliver parcels efficiently while earning rewards</p>
+            <a href="{{ url_for('register') }}" class="btn btn-primary fade-in">
+                <i class="fas fa-rocket"></i> Get Started Today
+            </a>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="container">
+            <div class="text-center">
+                <h2 style="color: var(--primary-green); margin-bottom: 1rem; font-size: 2.5rem;">Why Choose PathPort?</h2>
+                <p style="color: var(--accent-green); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                    Revolutionary parcel delivery platform that transforms your daily commute into earning opportunities
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card slide-in-left">
+                    <i class="fas fa-brain"></i>
+                    <h3>AI-Powered Matching</h3>
+                    <p>Our intelligent system matches parcels with the best delivery partners based on routes, availability, and preferences using advanced machine learning algorithms.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <i class="fas fa-leaf"></i>
+                    <h3>Eco-Friendly Solution</h3>
+                    <p>Reduce carbon emissions by utilizing existing commuter routes instead of dedicated delivery trips. Join the green revolution in logistics.</p>
+                </div>
+                <div class="feature-card slide-in-right">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <h3>Earn While You Commute</h3>
+                    <p>Turn your daily commute into an earning opportunity by delivering parcels along your regular route. No extra travel required.</p>
+                </div>
+                <div class="feature-card slide-in-left">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h3>Real-Time Tracking</h3>
+                    <p>Track your parcels in real-time with our advanced GPS tracking system and get instant updates through our interactive chatbot.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Secure & Verified</h3>
+                    <p>All users are verified for safety and security. Transactions are protected with our digital wallet system and comprehensive insurance.</p>
+                </div>
+                <div class="feature-card slide-in-right">
+                    <i class="fas fa-clock"></i>
+                    <h3>Lightning Fast Delivery</h3>
+                    <p>Get your parcels delivered faster than traditional courier services at affordable prices with same-day and express delivery options.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" style="background: var(--bg-light); padding: 4rem 0;">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2 style="color: var(--primary-green); margin-bottom: 2rem; font-size: 2.5rem;">How PathPort Works</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div style="background: var(--primary-green); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem; font-weight: bold;">1</div>
+                    <h3>Register & Verify</h3>
+                    <p>Create your account as a sender or delivery partner. Complete our quick verification process to ensure platform safety.</p>
+                </div>
+                <div class="feature-card">
+                    <div style="background: var(--secondary-green); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem; font-weight: bold;">2</div>
+                    <h3>Smart Matching</h3>
+                    <p>Our AI system intelligently matches parcels with delivery partners based on routes, timing, and availability.</p>
+                </div>
+                <div class="feature-card">
+                    <div style="background: var(--accent-green); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem; font-weight: bold;">3</div>
+                    <h3>Secure Delivery</h3>
+                    <p>Track your parcel in real-time, receive instant updates, and enjoy secure handovers with our verified delivery network.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section style="background: white; padding: 4rem 0;">
+        <div class="container text-center">
+            <h2 style="color: var(--primary-green); margin-bottom: 2rem;">Ready to Transform Your Delivery Experience?</h2>
+            <p style="color: var(--accent-green); font-size: 1.1rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Join thousands of users who are already saving money, time, and the environment with PathPort
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('register') }}?role=sender" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Send Parcels
+                </a>
+                <a href="{{ url_for('register') }}?role=delivery_partner" class="btn btn-success">
+                    <i class="fas fa-truck"></i> Become a Partner
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="track-order" style="background: var(--bg-light); padding: 4rem 0;">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2 style="color: var(--primary-green); margin-bottom: 1rem;">Track Your Delivery</h2>
+                <p style="color: var(--accent-green); margin-bottom: 2rem;">Enter your order ID to track your parcel</p>
+            </div>
+            <div style="max-width: 500px; margin: 0 auto;">
+                <div class="tracking-form">
+                    <input type="text" id="orderId" placeholder="Enter Order ID" class="form-control" 
+                           style="font-size: 1.1rem; padding: 1rem; margin-bottom: 1rem; width: 100%; border: 2px solid var(--light-green); border-radius: 8px;">
+                    <button onclick="trackOrder()" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-search"></i> Track Parcel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: var(--primary-green); color: white; padding: 3rem 0;">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+                <div>
+                    <h3 style="margin-bottom: 1rem;">
+                        <i class="fas fa-shipping-fast"></i> PathPort
+                    </h3>
+                    <p style="opacity: 0.8;">Revolutionizing parcel delivery through AI-enabled crowdsourcing and sustainable logistics solutions.</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem;">Quick Links</h4>
+                    <ul style="list-style: none;">
+                        <li><a href="{{ url_for('login') }}" style="color: white; opacity: 0.8; text-decoration: none;">Login</a></li>
+                        <li><a href="{{ url_for('register') }}" style="color: white; opacity: 0.8; text-decoration: none;">Register</a></li>
+                        <li><a href="#features" style="color: white; opacity: 0.8; text-decoration: none;">Features</a></li>
+                        <li><a href="#about" style="color: white; opacity: 0.8; text-decoration: none;">How it Works</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem;">Contact Info</h4>
+                    <p style="opacity: 0.8;"><i class="fas fa-envelope"></i> support@pathport.com</p>
+                    <p style="opacity: 0.8;"><i class="fas fa-phone"></i> +91-800-PATHPORT</p>
+                    <p style="opacity: 0.8;"><i class="fas fa-map-marker-alt"></i> Mumbai, Maharashtra, India</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem;">Follow Us</h4>
+                    <div style="display: flex; gap: 1rem;">
+                        <a href="#" style="color: white; font-size: 1.5rem; opacity: 0.8;"><i class="fab fa-facebook"></i></a>
+                        <a href="#" style="color: white; font-size: 1.5rem; opacity: 0.8;"><i class="fab fa-twitter"></i></a>
+                        <a href="#" style="color: white; font-size: 1.5rem; opacity: 0.8;"><i class="fab fa-instagram"></i></a>
+                        <a href="#" style="color: white; font-size: 1.5rem; opacity: 0.8;"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr style="margin: 2rem 0; opacity: 0.3;">
+            <div style="text-align: center; opacity: 0.8;">
+                <p>&copy; 2024 PathPort. All rights reserved. | Designed for AI-ML Project by Team PathPort</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                {% for message in messages %}
+                    <div class="alert alert-success fade-in">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Mobile menu toggle
+        const mobileToggle = document.querySelector('.mobile-menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+        
+        if (mobileToggle && navLinks) {
+            mobileToggle.addEventListener('click', function() {
+                navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+            });
+        }
+    function trackOrder() {
+        const orderId = document.getElementById('orderId').value.trim();
+        if (orderId) {
+            // Redirect to Flask route
+            window.location.href = `/track/${orderId}`;
+        } else {
+            alert('Please enter a valid order ID');
+        }
+    }
+    </script>
+</body>
+</html>

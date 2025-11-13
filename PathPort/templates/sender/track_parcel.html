@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Parcels - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.user_name }}</p>
+            <small>Parcel Sender</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('sender_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('create_parcel') }}">
+                <i class="fas fa-plus"></i> Create Parcel
+            </a></li>
+            <li><a href="{{ url_for('track_parcel') }}" class="active">
+                <i class="fas fa-map-marker-alt"></i> Track Parcels
+            </a></li>
+            <li><a href="{{ url_for('sender_profile') }}">
+                <i class="fas fa-user"></i> My Profile
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <div>
+                <h1>Track Your Parcels</h1>
+                <p>Monitor real-time status and location of your parcel deliveries</p>
+            </div>
+            <a href="{{ url_for('create_parcel') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Parcel
+            </a>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Search and Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-item">
+                    <label for="statusFilter">Filter by Status:</label>
+                    <select id="statusFilter" class="form-control">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="assigned">Assigned</option>
+                        <option value="picked_up">Picked Up</option>
+                        <option value="delivered">Delivered</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="urgencyFilter">Filter by Urgency:</label>
+                    <select id="urgencyFilter" class="form-control">
+                        <option value="">All Urgency</option>
+                        <option value="normal">Normal</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="express">Express</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="searchParcel">Search:</label>
+                    <input type="text" id="searchParcel" class="form-control" 
+                           placeholder="Search by title or location">
+                </div>
+            </div>
+
+            {% if parcels %}
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ parcels|length }}</div>
+                            <div class="stat-label">Total Parcels</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: var(--warning-light);">
+                            <i class="fas fa-clock" style="color: var(--warning);"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ parcels|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: var(--info-light);">
+                            <i class="fas fa-truck" style="color: var(--info);"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ parcels|selectattr('status', 'in', ['assigned', 'picked_up'])|list|length }}</div>
+                            <div class="stat-label">In Transit</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: var(--success-light);">
+                            <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ parcels|selectattr('status', 'equalto', 'delivered')|list|length }}</div>
+                            <div class="stat-label">Delivered</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list"></i> All Parcels</h3>
+                        <span id="parcelCount">Showing {{ parcels|length }} parcels</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="parcelsList">
+                            {% for parcel in parcels %}
+                            <div class="parcel-item fade-in" 
+                                 data-status="{{ parcel.status }}" 
+                                 data-urgency="{{ parcel.urgency }}"
+                                 data-parcel-id="{{ parcel._id }}">
+                                
+                                <div class="parcel-icon">
+                                    {% if parcel.status == 'delivered' %}
+                                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                    {% elif parcel.status == 'picked_up' %}
+                                        <i class="fas fa-truck" style="color: var(--primary-green);"></i>
+                                    {% elif parcel.status == 'assigned' %}
+                                        <i class="fas fa-user-check" style="color: var(--info);"></i>
+                                    {% else %}
+                                        <i class="fas fa-clock" style="color: var(--warning);"></i>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="parcel-details">
+                                    <div class="parcel-header">
+                                        <div class="parcel-title">{{ parcel.title }}</div>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <span class="status-badge status-{{ parcel.status.replace('_', '-') }}">
+                                                {{ parcel.status.replace('_', ' ').title() }}
+                                            </span>
+                                            <span class="urgency-badge urgency-{{ parcel.urgency }}">
+                                                {{ parcel.urgency.title() }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="parcel-info">
+                                        {{ parcel.description or 'No description provided' }}
+                                    </div>
+                                    
+                                    <div class="parcel-route">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                            <i class="fas fa-map-marker-alt" style="color: var(--success);"></i>
+                                            <strong>From:</strong> {{ parcel.pickup_location }}
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <i class="fas fa-flag-checkered" style="color: var(--danger);"></i>
+                                            <strong>To:</strong> {{ parcel.delivery_location }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="parcel-timeline">
+                                        <div class="timeline-item {{ 'completed' if parcel.created_at else '' }}">
+                                            <i class="fas fa-plus-circle"></i>
+                                            <span>Created: {{ parcel.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                                        </div>
+                                        
+                                        {% if parcel.get('assigned_at') %}
+                                        <div class="timeline-item completed">
+                                            <i class="fas fa-user-check"></i>
+                                            <span>Assigned: {{ parcel.assigned_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if parcel.get('picked_up_at') %}
+                                        <div class="timeline-item completed">
+                                            <i class="fas fa-hand-holding"></i>
+                                            <span>Picked Up: {{ parcel.picked_up_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if parcel.get('delivered_at') %}
+                                        <div class="timeline-item completed">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Delivered: {{ parcel.delivered_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="parcel-meta">
+                                        <small class="text-muted">
+                                            <i class="fas fa-weight-hanging"></i> {{ parcel.weight }}kg | 
+                                            <i class="fas fa-expand-arrows-alt"></i> {{ parcel.size.title() }} | 
+                                            <i class="fas fa-star"></i> {{ parcel.get('reward_points', 10) }} points
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="parcel-actions">
+                                    {% if parcel.status == 'pending' %}
+                                        <button class="btn btn-secondary btn-sm" onclick="editParcel('{{ parcel._id }}')">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                    {% endif %}
+                                    
+                                    <button class="btn btn-info btn-sm" onclick="viewParcelDetails('{{ parcel._id }}')">
+                                        <i class="fas fa-eye"></i> Details
+                                    </button>
+                                    
+                                    {% if parcel.status in ['assigned', 'picked_up'] %}
+                                        <button class="btn btn-primary btn-sm pulse" onclick="trackLive('{{ parcel._id }}')">
+                                            <i class="fas fa-map-marked-alt"></i> Live Track
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body" style="text-align: center; padding: 4rem;">
+                        <div style="font-size: 5rem; color: var(--light-green); margin-bottom: 2rem;">
+                            <i class="fas fa-search-location"></i>
+                        </div>
+                        <h3 style="color: var(--primary-green); margin-bottom: 1rem;">No Parcels to Track</h3>
+                        <p style="color: var(--accent-green); margin-bottom: 3rem; font-size: 1.1rem;">
+                            You haven't created any parcel delivery requests yet.<br>
+                            Start by creating your first parcel!
+                        </p>
+                        <a href="{{ url_for('create_parcel') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus"></i> Create Your First Parcel
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Parcel Details Modal -->
+    <div id="parcelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-box"></i> Parcel Details</h3>
+                <span class="close" onclick="closeModal('parcelModal')">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Parcel details will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Tracking Modal -->
+    <div id="trackingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-map-marked-alt"></i> Live Tracking</h3>
+                <span class="close" onclick="closeModal('trackingModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="trackingMap" style="height: 400px; background: var(--bg-light); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent-green);">
+                    <div style="text-align: center;">
+                        <i class="fas fa-map" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>Live tracking map would be integrated here<br>with real-time delivery partner location</p>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 8px;">
+                    <h4>Estimated Delivery Time</h4>
+                    <p><i class="fas fa-clock"></i> <strong>45 minutes</strong> (based on current traffic)</p>
+                    <p><i class="fas fa-user"></i> Delivery Partner: <strong>Rahul Sharma</strong> (4.8★)</p>
+                    <p><i class="fas fa-phone"></i> Contact: <strong>+91-98765-43210</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Filter functionality
+        document.getElementById('statusFilter').addEventListener('change', filterParcels);
+        document.getElementById('urgencyFilter').addEventListener('change', filterParcels);
+        document.getElementById('searchParcel').addEventListener('input', filterParcels);
+
+        function filterParcels() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const urgencyFilter = document.getElementById('urgencyFilter').value;
+            const searchFilter = document.getElementById('searchParcel').value.toLowerCase();
+            const parcels = document.querySelectorAll('.parcel-item');
+
+            let visibleCount = 0;
+
+            parcels.forEach(parcel => {
+                const status = parcel.getAttribute('data-status');
+                const urgency = parcel.getAttribute('data-urgency');
+                const text = parcel.textContent.toLowerCase();
+
+                const matchesStatus = !statusFilter || status === statusFilter;
+                const matchesUrgency = !urgencyFilter || urgency === urgencyFilter;
+                const matchesSearch = !searchFilter || text.includes(searchFilter);
+
+                if (matchesStatus && matchesUrgency && matchesSearch) {
+                    parcel.style.display = '';
+                    parcel.classList.add('fade-in');
+                    visibleCount++;
+                } else {
+                    parcel.style.display = 'none';
+                    parcel.classList.remove('fade-in');
+                }
+            });
+
+            // Update count
+            document.getElementById('parcelCount').textContent = `Showing ${visibleCount} parcels`;
+        }
+
+        function viewParcelDetails(parcelId) {
+            const modal = document.getElementById('parcelModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalBody.innerHTML = `
+                <div class="loading text-center">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-green);"></i>
+                    <p>Loading parcel details...</p>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            
+            // Fetch parcel details from server
+            fetch(`/api/parcel-details/${parcelId}`)
+                .then(response => response.json())
+                .then(parcel => {
+                    modalBody.innerHTML = `
+                        ${parcel.image ? `
+                            <div class="parcel-image">
+                                <img src="data:${parcel.image.mimetype};base64,${parcel.image.data}" 
+                                     alt="Parcel Image" class="parcel-photo">
+                            </div>
+                        ` : `
+                            <div class="no-image">
+                                <i class="fas fa-box"></i>
+                                <p>No image available</p>
+                            </div>
+                        `}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                            <div>
+                                <h4><i class="fas fa-info-circle"></i> Basic Information</h4>
+                                <p><strong>Parcel ID:</strong> ${parcel.order_id}</p>
+                                <p><strong>Weight:</strong> ${parcel.weight} kg</p>
+                                <p><strong>Size:</strong> ${parcel.size}</p>
+                                <p><strong>Reward Points:</strong> ${parcel.reward_points} points</p>
+                            </div>
+                            <div>
+                                <h4><i class="fas fa-route"></i> Delivery Route</h4>
+                                <p><strong>From:</strong> ${parcel.pickup_location}</p>
+                                <p><strong>To:</strong> ${parcel.delivery_location}</p>
+                                <p><strong>Status:</strong> ${parcel.status}</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 2rem;">
+                            <h4><i class="fas fa-shield-alt"></i> Security & Safety</h4>
+                            <p>Your parcel is protected by our comprehensive insurance policy. All delivery partners are verified and rated by the community.</p>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    modalBody.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Failed to load parcel details. Please try again.</p>
+                        </div>
+                    `;
+                    console.error('Error:', error);
+                });
+        }
+
+        function trackLive(parcelId) {
+            const modal = document.getElementById('trackingModal');
+            modal.style.display = 'block';
+            
+            // Simulate real-time updates
+            setInterval(() => {
+                const timeElement = document.querySelector('#trackingModal strong');
+                if (timeElement && timeElement.textContent.includes('minutes')) {
+                    const currentTime = parseInt(timeElement.textContent);
+                    if (currentTime > 5) {
+                        timeElement.textContent = `${currentTime - 1} minutes`;
+                    }
+                }
+            }, 60000);
+        }
+
+        function editParcel(parcelId) {
+            if (confirm('Are you sure you want to edit this parcel? This action cannot be undone after a delivery partner is assigned.')) {
+                // Redirect to edit page or show edit modal
+                window.location.href = `{{ url_for('create_parcel') }}?edit=${parcelId}`;
+            }
+        }
+
+        // Real-time status updates
+        setInterval(() => {
+            const inTransitParcels = document.querySelectorAll('[data-status="assigned"], [data-status="picked_up"]');
+            inTransitParcels.forEach(parcel => {
+                const statusBadge = parcel.querySelector('.status-badge');
+                if (statusBadge && Math.random() > 0.98) {
+                    statusBadge.classList.add('pulse');
+                    setTimeout(() => statusBadge.classList.remove('pulse'), 2000);
+                }
+            });
+        }, 5000);
+
+        // Add CSS for timeline
+        const timelineStyle = document.createElement('style');
+        timelineStyle.textContent = `
+            .parcel-timeline {
+                margin: 1rem 0;
+                padding: 1rem;
+                background: var(--bg-light);
+                border-radius: 8px;
+            }
+            
+            .timeline-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-bottom: 0.5rem;
+                opacity: 0.5;
+                font-size: 0.9rem;
+            }
+            
+            .timeline-item.completed {
+                opacity: 1;
+                color: var(--success);
+            }
+            
+            .timeline-item i {
+                width: 16px;
+            }
+        `;
+        document.head.appendChild(timelineStyle);
+    </script>
+</body>
+</html>
