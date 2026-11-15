@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sender Dashboard - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.user_name }}</p>
+            <small>Parcel Sender</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('sender_dashboard') }}" class="active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('create_parcel') }}">
+                <i class="fas fa-plus"></i> Create Parcel
+            </a></li>
+            <li><a href="{{ url_for('track_parcel') }}">
+                <i class="fas fa-map-marker-alt"></i> Track Parcels
+            </a></li>
+            <li><a href="{{ url_for('sender_profile') }}">
+                <i class="fas fa-user"></i> My Profile
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="dashboard-header">
+            <div class="welcome-section">
+                <h1>Welcome back, {{ session.user_name }}!</h1>
+                <p>Manage your parcel deliveries and track shipments</p>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">{{ session.user_name[0].upper() }}</div>
+                <div>
+                    <strong>{{ session.user_name }}</strong>
+                    <br><small>Parcel Sender</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <div class="quick-actions">
+                <a href="{{ url_for('create_parcel') }}" class="action-card fade-in">
+                    <div class="action-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h3>Create New Parcel</h3>
+                    <p>Send a new parcel with our trusted delivery network</p>
+                </a>
+                
+                <a href="{{ url_for('track_parcel') }}" class="action-card fade-in">
+                    <div class="action-icon">
+                        <i class="fas fa-search-location"></i>
+                    </div>
+                    <h3>Track Parcels</h3>
+                    <p>Monitor your parcel delivery status in real-time</p>
+                </a>
+                
+                <a href="{{ url_for('sender_profile') }}" class="action-card fade-in">
+                    <div class="action-icon">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <h3>My Profile</h3>
+                    <p>Update your profile and delivery preferences</p>
+                </a>
+            </div>
+
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-number">{{ parcels|length }}</div>
+                    <div class="stat-label">Total Parcels</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-number">{{ parcels|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                    <div class="stat-label">Pending Delivery</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="stat-number">{{ parcels|selectattr('status', 'in', ['assigned', 'picked_up'])|list|length }}</div>
+                    <div class="stat-label">In Transit</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number">{{ parcels|selectattr('status', 'equalto', 'delivered')|list|length }}</div>
+                    <div class="stat-label">Delivered</div>
+                </div>
+            </div>
+
+            <div class="recent-parcels">
+                <div class="section-header">
+                    <h3><i class="fas fa-history"></i> Recent Parcels</h3>
+                    <a href="{{ url_for('create_parcel') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Parcel
+                    </a>
+                </div>
+                
+                {% if parcels %}
+                    {% for parcel in parcels[:5] %}
+                    <div class="parcel-item fade-in">
+                        <div class="parcel-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="parcel-details">
+                            <div class="parcel-title">{{ parcel.title }}</div>
+                            <div class="parcel-info">{{ parcel.description or 'No description provided' }}</div>
+                            <div class="parcel-route">
+                                <i class="fas fa-map-marker-alt text-success"></i> {{ parcel.pickup_location }}
+                                <i class="fas fa-arrow-right" style="margin: 0 0.5rem;"></i>
+                                <i class="fas fa-flag-checkered text-danger"></i> {{ parcel.delivery_location }}
+                            </div>
+                            <small class="text-muted">Created: {{ parcel.created_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
+                        </div>
+                        <div class="parcel-actions">
+                            <span class="status-badge status-{{ parcel.status.replace('_', '-') }}">
+                                {{ parcel.status.replace('_', ' ').title() }}
+                            </span>
+                            <span class="urgency-badge urgency-{{ parcel.urgency }}">
+                                {{ parcel.urgency.title() }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if parcels|length > 5 %}
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <a href="{{ url_for('track_parcel') }}" class="btn btn-outline">
+                            <i class="fas fa-eye"></i> View All Parcels ({{ parcels|length }})
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div style="text-align: center; padding: 3rem;">
+                        <div style="font-size: 4rem; color: var(--light-green); margin-bottom: 1rem;">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <h3 style="color: var(--primary-green); margin-bottom: 1rem;">No Parcels Yet</h3>
+                        <p style="color: var(--accent-green); margin-bottom: 2rem;">
+                            Start by creating your first parcel delivery request
+                        </p>
+                        <a href="{{ url_for('create_parcel') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus"></i> Create Your First Parcel
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                {% for message in messages %}
+                    <div class="alert alert-success fade-in">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+
+        // Real-time status updates simulation
+        setInterval(function() {
+            const statusBadges = document.querySelectorAll('.status-badge');
+            statusBadges.forEach(badge => {
+                if (badge.textContent.includes('Assigned') && Math.random() > 0.9) {
+                    badge.textContent = 'Picked Up';
+                    badge.className = 'status-badge status-picked-up';
+                    badge.classList.add('pulse');
+                    setTimeout(() => badge.classList.remove('pulse'), 2000);
+                }
+            });
+        }, 15000);
+
+        // Interactive card hover effects
+        document.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-12px) scale(1)';
+            });
+        });
+
+        // Parcel status color coding
+        document.querySelectorAll('.parcel-item').forEach(item => {
+            const statusBadge = item.querySelector('.status-badge');
+            if (statusBadge) {
+                const status = statusBadge.textContent.toLowerCase();
+                if (status.includes('delivered')) {
+                    item.style.borderLeft = '4px solid var(--success)';
+                } else if (status.includes('picked')) {
+                    item.style.borderLeft = '4px solid var(--primary-green)';
+                } else if (status.includes('assigned')) {
+                    item.style.borderLeft = '4px solid var(--info)';
+                } else {
+                    item.style.borderLeft = '4px solid var(--warning)';
+                }
+            }
+        });
+
+        // Dashboard statistics animation
+        document.querySelectorAll('.stat-number').forEach((stat, index) => {
+            const finalValue = parseInt(stat.textContent);
+            stat.textContent = '0';
+            
+            let current = 0;
+            const increment = finalValue / 30;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= finalValue) {
+                    stat.textContent = finalValue;
+                    clearInterval(timer);
+                } else {
+                    stat.textContent = Math.floor(current);
+                }
+            }, 50 + (index * 20));
+        });
+
+        // Welcome message based on time
+        const hour = new Date().getHours();
+        const welcomeText = document.querySelector('.welcome-section h1');
+        if (welcomeText) {
+            if (hour < 12) {
+                welcomeText.innerHTML = `Good morning, {{ session.user_name }}!`;
+            } else if (hour < 17) {
+                welcomeText.innerHTML = `Good afternoon, {{ session.user_name }}!`;
+            } else {
+                welcomeText.innerHTML = `Good evening, {{ session.user_name }}!`;
+            }
+        }
+    </script>
+</body>
+</html>

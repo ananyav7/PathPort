@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - PathPort Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.user_name }}</p>
+            <small>Administrator</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('admin_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('admin_users') }}" class="active">
+                <i class="fas fa-users"></i> User Management
+            </a></li>
+            <li><a href="{{ url_for('admin_orders') }}">
+                <i class="fas fa-box"></i> Order Monitoring
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <div>
+                <h1>User Management</h1>
+                <p>Manage all registered users, verify accounts, and monitor user activities</p>
+            </div>
+            <div>
+                <span class="status-badge status-verified">{{ users|length }} Total Users</span>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="stats-row">
+                <div class="stat-item">
+                    <h3>{{ users|selectattr('role', 'equalto', 'sender')|list|length }}</h3>
+                    <p>Senders</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ users|selectattr('role', 'equalto', 'delivery_partner')|list|length }}</h3>
+                    <p>Delivery Partners</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ users|selectattr('verified', 'equalto', true)|list|length }}</h3>
+                    <p>Verified Users</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ users|selectattr('verified', 'equalto', false)|list|length }}</h3>
+                    <p>Pending Verification</p>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-item">
+                    <label for="roleFilter">Filter by Role:</label>
+                    <select id="roleFilter" class="form-control">
+                        <option value="">All Roles</option>
+                        <option value="sender">Senders</option>
+                        <option value="delivery_partner">Delivery Partners</option>
+                        <option value="admin">Admins</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="statusFilter">Filter by Status:</label>
+                    <select id="statusFilter" class="form-control">
+                        <option value="">All Status</option>
+                        <option value="verified">Verified</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="searchUser">Search:</label>
+                    <input type="text" id="searchUser" class="form-control" placeholder="Search by name or email">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-users"></i> All Users</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Points</th>
+                                <th>Rating</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr data-role="{{ user.role }}" data-status="{% if user.verified %}verified{% else %}pending{% endif %}" class="fade-in">
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            {{ user.name[0].upper() }}
+                                        </div>
+                                        <div class="user-details">
+                                            <h4>{{ user.name }}</h4>
+                                            <p>{{ user.email }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="role-badge role-{{ user.role.replace('_', '-') }}">
+                                        {{ user.role.replace('_', ' ').title() }}
+                                    </span>
+                                </td>
+                                <td>{{ user.phone }}</td>
+                                <td>
+                                    {% if user.verified %}
+                                        <span class="status-badge status-verified">
+                                            <i class="fas fa-check-circle"></i> Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-pending">
+                                            <i class="fas fa-clock"></i> Pending
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ user.get('points_earned', 0) }}</strong> 
+                                    <small>pts</small>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span>{{ "%.1f"|format(user.rating) }}</span>
+                                        <div style="color: #ffc107; font-size: 0.8rem;">
+                                            {% for i in range(5) %}
+                                                {% if i < user.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ user.created_at.strftime('%b %d, %Y') }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        {% if not user.verified %}
+                                            <a href="{{ url_for('verify_user', user_id=user._id) }}" 
+                                               class="btn btn-success btn-sm" 
+                                               onclick="return confirm('Verify this user?')">
+                                                <i class="fas fa-check"></i> Verify
+                                            </a>
+                                        {% endif %}
+                                        {% if user.verified %}
+                                            <a href="{{ url_for('suspend_user', user_id=user._id) }}" 
+                                               class="btn btn-warning btn-sm"
+                                               onclick="return confirm('Suspend this user?')">
+                                                <i class="fas fa-pause"></i> Suspend
+                                            </a>
+                                        {% endif %}
+                                        <button class="btn btn-info btn-sm" onclick="viewUserDetails('{{ user._id }}')">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user"></i> User Details</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- User details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                {% for message in messages %}
+                    <div class="alert alert-success fade-in">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Filter functionality
+        document.getElementById('roleFilter').addEventListener('change', filterTable);
+        document.getElementById('statusFilter').addEventListener('change', filterTable);
+        document.getElementById('searchUser').addEventListener('input', filterTable);
+
+        function filterTable() {
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchFilter = document.getElementById('searchUser').value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTable tbody tr');
+
+            rows.forEach(row => {
+                const role = row.getAttribute('data-role');
+                const status = row.getAttribute('data-status');
+                const text = row.textContent.toLowerCase();
+
+                const matchesRole = !roleFilter || role === roleFilter;
+                const matchesStatus = !statusFilter || status === statusFilter;
+                const matchesSearch = !searchFilter || text.includes(searchFilter);
+
+                if (matchesRole && matchesStatus && matchesSearch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update visible count
+            const visibleRows = document.querySelectorAll('#usersTable tbody tr[style=""], #usersTable tbody tr:not([style])');
+            console.log(`Showing ${visibleRows.length} users`);
+        }
+
+        function viewUserDetails(userId) {
+            // In a real application, you would fetch user details via AJAX
+            const modal = document.getElementById('userModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalBody.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading user details...
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            
+            // Simulate loading delay
+            setTimeout(() => {
+                modalBody.innerHTML = `
+                    <p><strong>User ID:</strong> ${userId}</p>
+                    <p><strong>Status:</strong> Active</p>
+                    <p><strong>Last Login:</strong> 2 hours ago</p>
+                    <p><strong>Total Deliveries:</strong> 15</p>
+                    <p><strong>Success Rate:</strong> 98.5%</p>
+                `;
+            }, 1000);
+        }
+
+        function closeModal() {
+            document.getElementById('userModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('userModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+
+        // Real-time user status updates
+        setInterval(function() {
+            const statusBadges = document.querySelectorAll('.status-badge');
+            statusBadges.forEach(badge => {
+                if (Math.random() > 0.95) {
+                    badge.classList.add('pulse');
+                    setTimeout(() => badge.classList.remove('pulse'), 1000);
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

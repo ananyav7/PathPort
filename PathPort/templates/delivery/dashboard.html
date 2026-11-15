@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Parcels - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.user_name }}</p>
+            <small>Delivery Partner</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('delivery_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('available_parcels') }}" class="active">
+                <i class="fas fa-box-open"></i> Available Parcels
+            </a></li>
+            <li><a href="{{ url_for('my_routes') }}">
+                <i class="fas fa-route"></i> My Routes
+            </a></li>
+            <li><a href="{{ url_for('delivery_earnings') }}">
+                <i class="fas fa-star"></i> Points & Earnings
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <div>
+                <h1>Available Parcels</h1>
+                <p>Browse and accept parcel delivery requests that match your routes</p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <div class="status-indicator status-online">
+                    <span>{{ parcels|length }} Available</span>
+                </div>
+                <button class="btn btn-primary" onclick="refreshParcels()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Quick Stats -->
+            <div class="stats-row">
+                <div class="stat-item">
+                    <h3>{{ parcels|length }}</h3>
+                    <p>Total Available</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ parcels|selectattr('urgency', 'equalto', 'express')|list|length }}</h3>
+                    <p>Express Delivery</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ parcels|selectattr('urgency', 'equalto', 'urgent')|list|length }}</h3>
+                    <p>Urgent Orders</p>
+                </div>
+                <div class="stat-item">
+                    <h3>{{ ((parcels|map(attribute='reward_points')|list|sum) / parcels|length)|int if parcels else 0 }}</h3>
+                    <p>Avg Points</p>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filter-bar">
+                <div class="filter-item">
+                    <label for="urgencyFilter">Priority:</label>
+                    <select id="urgencyFilter" class="form-control">
+                        <option value="">All Priorities</option>
+                        <option value="express">Express (High Points)</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="normal">Normal</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="sizeFilter">Size:</label>
+                    <select id="sizeFilter" class="form-control">
+                        <option value="">All Sizes</option>
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="pointsFilter">Min Points:</label>
+                    <select id="pointsFilter" class="form-control">
+                        <option value="">Any Points</option>
+                        <option value="20">20+ Points</option>
+                        <option value="15">15+ Points</option>
+                        <option value="10">10+ Points</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="searchParcels">Search:</label>
+                    <input type="text" id="searchParcels" class="form-control" placeholder="Search by location or title">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-box-open"></i> Available for Pickup</h3>
+                    <span id="parcelCount">Showing {{ parcels|length }} parcels</span>
+                </div>
+                <div class="card-body">
+                    {% if parcels %}
+                        <div id="parcelsList">
+                            {% for parcel in parcels %}
+                            <div class="parcel-item fade-in" 
+                                 data-urgency="{{ parcel.urgency }}" 
+                                 data-size="{{ parcel.size }}"
+                                 data-points="{{ parcel.get('reward_points', 10) }}"
+                                 data-parcel-id="{{ parcel._id }}">
+                                
+                                <div class="parcel-icon">
+                                    {% if parcel.urgency == 'express' %}
+                                        <i class="fas fa-bolt" style="color: var(--danger);"></i>
+                                    {% elif parcel.urgency == 'urgent' %}
+                                        <i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i>
+                                    {% else %}
+                                        <i class="fas fa-box" style="color: var(--primary-green);"></i>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="parcel-details">
+                                    <div class="parcel-header">
+                                        <div class="parcel-title">{{ parcel.title }}</div>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <span class="urgency-badge urgency-{{ parcel.urgency }}">
+                                                {{ parcel.urgency.title() }}
+                                            </span>
+                                            <div style="background: var(--success); color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-weight: bold; font-size: 0.9rem;">
+                                                <i class="fas fa-star"></i> {{ parcel.get('reward_points', 10) }} pts
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="parcel-info">
+                                        {{ parcel.description or 'No additional description provided' }}
+                                    </div>
+                                    
+                                    <div class="parcel-route">
+                                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; margin: 1rem 0;">
+                                            <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--success);">
+                                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                    <i class="fas fa-map-marker-alt" style="color: var(--success);"></i>
+                                                    <strong>Pickup</strong>
+                                                </div>
+                                                <div>{{ parcel.pickup_location }}</div>
+                                                <small class="text-muted">Ready for pickup</small>
+                                            </div>
+                                            
+                                            <div style="text-align: center; color: var(--primary-green);">
+                                                <i class="fas fa-arrow-right" style="font-size: 1.5rem;"></i>
+                                                <br><small>12.5 km</small>
+                                            </div>
+                                            
+                                            <div style="background: var(--bg-light); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--danger);">
+                                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                                    <i class="fas fa-flag-checkered" style="color: var(--danger);"></i>
+                                                    <strong>Delivery</strong>
+                                                </div>
+                                                <div>{{ parcel.delivery_location }}</div>
+                                                <small class="text-muted">Destination</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="parcel-meta">
+                                        <div style="display: flex; gap: 2rem; align-items: center; color: var(--accent-green); font-size: 0.9rem;">
+                                            <span><i class="fas fa-weight-hanging"></i> {{ parcel.weight }}kg</span>
+                                            <span><i class="fas fa-expand-arrows-alt"></i> {{ parcel.size.title() }}</span>
+                                            <span><i class="fas fa-clock"></i> Created {{ parcel.created_at.strftime('%b %d, %I:%M %p') }}</span>
+                                            <span><i class="fas fa-route"></i> Est. 35 mins</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="parcel-actions">
+                                    <button class="btn btn-success" onclick="acceptParcel('{{ parcel._id }}')">
+                                        <i class="fas fa-handshake"></i> Accept Delivery
+                                    </button>
+                                    <button class="btn btn-info btn-sm" onclick="viewParcelDetails('{{ parcel._id }}')">
+                                        <i class="fas fa-eye"></i> Details
+                                    </button>
+                                    <button class="btn btn-primary btn-sm" onclick="viewRoute('{{ parcel._id }}')">
+                                        <i class="fas fa-route"></i> Route
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" onclick="contactSender('{{ parcel._id }}')">
+                                        <i class="fas fa-phone"></i> Contact
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: 4rem;">
+                            <div style="font-size: 5rem; color: var(--light-green); margin-bottom: 2rem;">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <h3 style="color: var(--primary-green); margin-bottom: 1rem;">No Available Parcels</h3>
+                            <p style="color: var(--accent-green); font-size: 1.1rem; margin-bottom: 2rem;">
+                                There are currently no parcels available for delivery.<br>
+                                Check back soon or update your routes to get better matches.
+                            </p>
+                            <div style="display: flex; gap: 1rem; justify-content: center;">
+                                <a href="{{ url_for('my_routes') }}" class="btn btn-primary">
+                                    <i class="fas fa-route"></i> Manage Routes
+                                </a>
+                                <button class="btn btn-outline" onclick="refreshParcels()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parcel Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-box"></i> Parcel Details</h3>
+                <span class="close" onclick="closeModal('detailsModal')">&times;</span>
+            </div>
+            <div class="modal-body" id="detailsModalBody">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Route Preview Modal -->
+    <div id="routeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-route"></i> Route Preview</h3>
+                <span class="close" onclick="closeModal('routeModal')">&times;</span>
+            </div>
+            <div class="modal-body" id="routeModalBody">
+                <!-- Route will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Modal -->
+    <div id="otpVerificationModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> OTP Verification</h3>
+                <span class="close" onclick="closeModal('otpVerificationModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="verification-tabs">
+                    <button class="tab-btn active" onclick="switchTab('pickup')">Pickup Verification</button>
+                    <button class="tab-btn" onclick="switchTab('delivery')">Delivery Verification</button>
+                </div>
+
+                <div id="pickupVerification" class="verification-section active">
+                    <div class="verification-form">
+                        <div class="form-group">
+                            <label>Order ID</label>
+                            <input type="text" id="pickupOrderId" class="form-control" placeholder="Enter order ID">
+                        </div>
+                        <div class="form-group">
+                            <label>Pickup OTP</label>
+                            <div class="otp-input-group">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                            </div>
+                        </div>
+                        <button class="btn btn-success btn-block" onclick="verifyPickupOTP()">
+                            Verify Pickup
+                        </button>
+                    </div>
+                </div>
+
+                <div id="deliveryVerification" class="verification-section">
+                    <div class="verification-form">
+                        <div class="form-group">
+                            <label>Order ID</label>
+                            <input type="text" id="deliveryOrderId" class="form-control" placeholder="Enter order ID">
+                        </div>
+                        <div class="form-group">
+                            <label>Delivery OTP</label>
+                            <div class="otp-input-group">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                                <input type="text" maxlength="1" class="otp-digit">
+                            </div>
+                        </div>
+                        <button class="btn btn-success btn-block" onclick="verifyDeliveryOTP()">
+                            Verify Delivery
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Filter functionality
+        document.getElementById('urgencyFilter').addEventListener('change', filterParcels);
+        document.getElementById('sizeFilter').addEventListener('change', filterParcels);
+        document.getElementById('pointsFilter').addEventListener('change', filterParcels);
+        document.getElementById('searchParcels').addEventListener('input', filterParcels);
+
+        function filterParcels() {
+            const urgencyFilter = document.getElementById('urgencyFilter').value;
+            const sizeFilter = document.getElementById('sizeFilter').value;
+            const pointsFilter = document.getElementById('pointsFilter').value;
+            const searchFilter = document.getElementById('searchParcels').value.toLowerCase();
+            const parcels = document.querySelectorAll('.parcel-item');
+
+            let visibleCount = 0;
+
+            parcels.forEach(parcel => {
+                const urgency = parcel.getAttribute('data-urgency');
+                const size = parcel.getAttribute('data-size');
+                const points = parseInt(parcel.getAttribute('data-points'));
+                const text = parcel.textContent.toLowerCase();
+
+                const matchesUrgency = !urgencyFilter || urgency === urgencyFilter;
+                const matchesSize = !sizeFilter || size === sizeFilter;
+                const matchesPoints = !pointsFilter || points >= parseInt(pointsFilter);
+                const matchesSearch = !searchFilter || text.includes(searchFilter);
+
+                if (matchesUrgency && matchesSize && matchesPoints && matchesSearch) {
+                    parcel.style.display = '';
+                    parcel.classList.add('fade-in');
+                    visibleCount++;
+                } else {
+                    parcel.style.display = 'none';
+                }
+            });
+
+            document.getElementById('parcelCount').textContent = `Showing ${visibleCount} parcels`;
+        }
+
+        function acceptParcel(parcelId) {
+            if (confirm('Accept this parcel delivery? You will be responsible for pickup and safe delivery.')) {
+                const acceptBtn = document.querySelector(`button[onclick="acceptParcel('${parcelId}')"]`);
+                if (acceptBtn) {
+                    acceptBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accepting...';
+                    acceptBtn.disabled = true;
+                }
+                
+                // Call API to accept parcel
+                fetch(`/api/accept-parcel/${parcelId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Parcel accepted successfully!', 'success');
+                        // Open OTP verification modal for pickup
+                        openOTPVerification('pickup', parcelId);
+                        document.getElementById('pickupOrderId').value = data.orderId;
+                    } else {
+                        showAlert('Failed to accept parcel. Please try again.', 'error');
+                        if (acceptBtn) {
+                            acceptBtn.innerHTML = '<i class="fas fa-handshake"></i> Accept Delivery';
+                            acceptBtn.disabled = false;
+                        }
+                    }
+                });
+            }
+        }
+
+        function openOTPVerification(type, parcelId) {
+            const modal = document.getElementById('otpVerificationModal');
+            modal.style.display = 'block';
+            
+            // Switch to correct tab
+            switchTab(type);
+            
+            // Pre-fill order ID if provided
+            if (parcelId) {
+                document.getElementById(`${type}OrderId`).value = parcelId;
+            }
+            
+            // Focus on first OTP digit
+            const firstDigit = document.querySelector(`#${type}Verification .otp-digit`);
+            if (firstDigit) {
+                firstDigit.focus();
+            }
+        }
+
+        function viewParcelDetails(parcelId) {
+            const modal = document.getElementById('detailsModal');
+            const modalBody = document.getElementById('detailsModalBody');
+            
+            modalBody.innerHTML = `
+                <div class="loading text-center">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-green);"></i>
+                    <p>Loading detailed information...</p>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            
+            setTimeout(() => {
+                modalBody.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                        <div>
+                            <h4><i class="fas fa-info-circle"></i> Parcel Information</h4>
+                            <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 10px; margin-top: 1rem;">
+                                <p><strong>Parcel ID:</strong> #PP${parcelId.substr(-8).toUpperCase()}</p>
+                                <p><strong>Weight:</strong> 2.5 kg</p>
+                                <p><strong>Dimensions:</strong> 30x20x15 cm</p>
+                                <p><strong>Fragile:</strong> No</p>
+                                <p><strong>Value:</strong> Medium</p>
+                                <p><strong>Special Instructions:</strong> Ring doorbell, don't leave unattended</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4><i class="fas fa-user"></i> Sender Details</h4>
+                            <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 10px; margin-top: 1rem;">
+                                <p><strong>Name:</strong> Priya Sharma</p>
+                                <p><strong>Rating:</strong> ⭐⭐⭐⭐⭐ (4.9/5)</p>
+                                <p><strong>Phone:</strong> +91-98765-43210</p>
+                                <p><strong>Total Parcels:</strong> 28 sent</p>
+                                <p><strong>Reliability:</strong> Excellent</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 2rem;">
+                        <h4><i class="fas fa-star"></i> Earning Details</h4>
+                        <div style="background: linear-gradient(135deg, var(--success), #20c997); color: white; padding: 1.5rem; border-radius: 10px; margin-top: 1rem;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; text-align: center;">
+                                <div>
+                                    <div style="font-size: 2rem; font-weight: bold;">15</div>
+                                    <div>Points</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2rem; font-weight: bold;">12.5</div>
+                                    <div>Kilometers</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2rem; font-weight: bold;">35</div>
+                                    <div>Minutes</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2rem; font-weight: bold;">1.2</div>
+                                    <div>Points/KM</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="closeModal('detailsModal')">Close</button>
+                        <button class="btn btn-info" onclick="viewRoute('${parcelId}')">
+                            <i class="fas fa-route"></i> View Route
+                        </button>
+                        <button class="btn btn-success" onclick="acceptParcelFromModal('${parcelId}')">
+                            <i class="fas fa-handshake"></i> Accept Parcel
+                        </button>
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        function viewRoute(parcelId) {
+            const modal = document.getElementById('routeModal');
+            const modalBody = document.getElementById('routeModalBody');
+            
+            modalBody.innerHTML = `
+                <div class="loading text-center">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-green);"></i>
+                    <p>Calculating optimal route...</p>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            
+            setTimeout(() => {
+                modalBody.innerHTML = `
+                    <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem;">
+                        <h4><i class="fas fa-map"></i> Route Information</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; color: var(--primary-green); font-weight: bold;">12.5 km</div>
+                                <div>Total Distance</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; color: var(--primary-green); font-weight: bold;">35 min</div>
+                                <div>Estimated Time</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; color: var(--success); font-weight: bold;">Light</div>
+                                <div>Traffic Status</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 1.5rem; color: var(--primary-green); font-weight: bold;">₹45</div>
+                                <div>Fuel Cost</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background: white; border: 2px dashed var(--light-green); border-radius: 10px; height: 300px; display: flex; align-items: center; justify-content: center; color: var(--accent-green);">
+                        <div style="text-align: center;">
+                            <i class="fas fa-map" style="font-size: 4rem; margin-bottom: 1rem; color: var(--primary-green);"></i>
+                            <h4>Interactive Route Map</h4>
+                            <p>Turn-by-turn navigation would be displayed here<br>with real-time traffic updates and alternative routes</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+                        <button class="btn btn-primary" onclick="startNavigation('${parcelId}')">
+                            <i class="fas fa-directions"></i> Start Navigation
+                        </button>
+                        <button class="btn btn-info" onclick="shareRoute('${parcelId}')">
+                            <i class="fas fa-share"></i> Share Route
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeModal('routeModal')">Close</button>
+                    </div>
+                `;
+            }, 1200);
+        }
+
+        function contactSender(parcelId) {
+            if (confirm('Contact the sender? This will share your contact information with them.')) {
+                showAlert('Contact information shared! Sender will receive your details.', 'success');
+            }
+        }
+
+        function acceptParcelFromModal(parcelId) {
+            closeModal('detailsModal');
+            acceptParcel(parcelId);
+        }
+
+        function startNavigation(parcelId) {
+            showAlert('Navigation started! Opening in your preferred maps application...', 'info');
+            closeModal('routeModal');
+        }
+
+        function shareRoute(parcelId) {
+            showAlert('Route link copied to clipboard!', 'success');
+        }
+
+        function refreshParcels() {
+            const refreshBtn = document.querySelector('button[onclick="refreshParcels()"]');
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            refreshBtn.disabled = true;
+            
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} fade-in`;
+            alert.innerHTML = message;
+            alert.style.position = 'fixed';
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }, 3000);
+        }
+
+        // Auto-refresh every 2 minutes
+        setInterval(() => {
+            if (document.hasFocus() && Math.random() > 0.7) {
+                const availableCount = document.querySelector('.stat-item h3');
+                if (availableCount) {
+                    const current = parseInt(availableCount.textContent);
+                    if (Math.random() > 0.5) {
+                        availableCount.textContent = current + 1;
+                        showAlert('New parcel available in your area!', 'info');
+                    }
+                }
+            }
+        }, 120000);
+
+        // Sort parcels by priority
+        function sortByPriority() {
+            const container = document.getElementById('parcelsList');
+            const parcels = Array.from(container.children);
+            
+            parcels.sort((a, b) => {
+                const urgencyOrder = { 'express': 3, 'urgent': 2, 'normal': 1 };
+                const aUrgency = urgencyOrder[a.getAttribute('data-urgency')];
+                const bUrgency = urgencyOrder[b.getAttribute('data-urgency')];
+                return bUrgency - aUrgency;
+            });
+            
+            parcels.forEach(parcel => container.appendChild(parcel));
+        }
+
+        // Initialize sorting
+        document.addEventListener('DOMContentLoaded', sortByPriority);
+
+        // Add to your existing <script> section
+
+        function openOTPVerification() {
+            const modal = document.getElementById('otpVerificationModal');
+            modal.style.display = 'block';
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.verification-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(`${tab}Verification`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Handle OTP input
+        document.querySelectorAll('.otp-digit').forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key >= 0 && e.key <= 9) {
+                    const next = input.nextElementSibling;
+                    if (next) {
+                        next.focus();
+                    }
+                } else if (e.key === 'Backspace') {
+                    const prev = input.previousElementSibling;
+                    if (prev) {
+                        prev.focus();
+                    }
+                }
+            });
+        });
+
+        function verifyPickupOTP() {
+            const orderId = document.getElementById('pickupOrderId').value;
+            const otpDigits = Array.from(document.querySelector('#pickupVerification .otp-input-group')
+                .getElementsByClassName('otp-digit'))
+                .map(input => input.value)
+                .join('');
+
+            // Add loading state
+            const verifyBtn = document.querySelector('#pickupVerification .btn-success');
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            verifyBtn.disabled = true;
+
+            fetch('/api/verify-pickup-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    otp: otpDigits
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Pickup verified successfully! You can now start the delivery.', 'success');
+                    closeModal('otpVerificationModal');
+                    // Update UI to show parcel is picked up
+                    refreshParcels();
+                    // Add navigation option
+                    showPickupSuccess(orderId);
+                } else {
+                    showAlert('Invalid OTP. Please try again.', 'error');
+                    // Reset OTP inputs
+                    document.querySelectorAll('#pickupVerification .otp-digit').forEach(input => input.value = '');
+                    document.querySelector('#pickupVerification .otp-digit').focus();
+                }
+                // Reset button
+                verifyBtn.innerHTML = 'Verify Pickup';
+                verifyBtn.disabled = false;
+            });
+        }
+
+        function showPickupSuccess(orderId) {
+            const successModal = document.createElement('div');
+            successModal.className = 'modal';
+            successModal.innerHTML = `
+                <div class="modal-content" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-check-circle" style="color: var(--success)"></i> Pickup Successful</h3>
+                        <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                    </div>
+                    <div class="modal-body" style="text-align: center;">
+                        <p>You have successfully picked up the parcel.</p>
+                        <div style="margin: 1.5rem 0;">
+                            <button class="btn btn-primary" onclick="startNavigation('${orderId}')">
+                                <i class="fas fa-directions"></i> Start Navigation
+                            </button>
+                            <button class="btn btn-success" onclick="completeDelivery('${orderId}')">
+                                <i class="fas fa-check"></i> Complete Delivery
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(successModal);
+            successModal.style.display = 'block';
+        }
+
+        function completeDelivery(orderId) {
+            openOTPVerification('delivery', orderId);
+        }
+
+        function verifyDeliveryOTP() {
+            const orderId = document.getElementById('deliveryOrderId').value;
+            const otpDigits = Array.from(document.querySelector('#deliveryVerification .otp-input-group')
+                .getElementsByClassName('otp-digit'))
+                .map(input => input.value)
+                .join('');
+
+            fetch('/api/verify-delivery-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    otp: otpDigits
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Delivery completed successfully!', 'success');
+                    closeModal('otpVerificationModal');
+                    // Update parcel status in UI
+                    refreshParcels();
+                } else {
+                    showAlert('Invalid OTP. Please try again.', 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

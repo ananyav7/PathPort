@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.user_name }}</p>
+            <small>Delivery Partner</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('delivery_dashboard') }}">
+                <i class="fas fa-home"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('verify_otp_page') }}" class="active">
+                <i class="fas fa-key"></i> Verify OTP
+            </a></li>
+            <li><a href="{{ url_for('available_parcels') }}">
+                <i class="fas fa-box"></i> Available Parcels
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <h2><i class="fas fa-key"></i> OTP Verification</h2>
+        </div>
+
+        <div class="content-wrapper">
+            <div class="verification-container">
+                <div class="verification-tabs">
+                    <button class="tab-btn active" onclick="switchTab('pickup')">
+                        <i class="fas fa-box"></i> Pickup Verification
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('delivery')">
+                        <i class="fas fa-check-circle"></i> Delivery Verification
+                    </button>
+                </div>
+
+                <div id="pickupVerification" class="verification-section active">
+                    <form onsubmit="verifyPickupOTP(event)" class="verification-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-group">
+                            <label>Order ID</label>
+                            <input type="text" id="pickupOrderId" class="form-control" required 
+                                   placeholder="Enter order ID (e.g., PP202509251234)">
+                        </div>
+                        <div class="form-group">
+                            <label>Pickup OTP</label>
+                            <div class="otp-input-group">
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block">
+                            Verify Pickup
+                        </button>
+                    </form>
+                </div>
+
+                <div id="deliveryVerification" class="verification-section">
+                    <form onsubmit="verifyDeliveryOTP(event)" class="verification-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-group">
+                            <label>Order ID</label>
+                            <input type="text" id="deliveryOrderId" class="form-control" required 
+                                   placeholder="Enter order ID (e.g., PP202509251234)">
+                        </div>
+                        <div class="form-group">
+                            <label>Delivery OTP</label>
+                            <div class="otp-input-group">
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                                <input type="text" maxlength="1" class="otp-digit" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block">
+                            Verify Delivery
+                        </button>
+                    </form>
+                </div>
+
+                <div class="recent-parcels">
+                    <h3>My Active Parcels</h3>
+                    <div class="parcels-list">
+                        {% if active_parcels %}
+                            {% for parcel in active_parcels %}
+                            <div class="parcel-item">
+                                <div class="parcel-info">
+                                    <strong>{{ parcel.order_id|default('N/A') }}</strong>
+                                    <p>{{ parcel.title|default('Untitled Parcel') }}</p>
+                                    <small>Status: {{ parcel.status|default('unknown') }}</small>
+                                </div>
+                                <button class="btn btn-outline" onclick="fillOrderId('{{ parcel.order_id }}', '{{ parcel.status }}')">
+                                    Verify
+                                </button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-parcels">
+                                <i class="fas fa-box-open"></i>
+                                <p>No active parcels found</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle OTP input navigation
+        document.querySelectorAll('.otp-input-group').forEach(group => {
+            const inputs = group.querySelectorAll('.otp-digit');
+            inputs.forEach((input, index) => {
+                input.addEventListener('keyup', (e) => {
+                    if (e.key >= 0 && e.key <= 9) {
+                        if (index < inputs.length - 1) inputs[index + 1].focus();
+                    } else if (e.key === 'Backspace') {
+                        if (index > 0) inputs[index - 1].focus();
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll('.otp-digit').forEach(input => {
+            input.addEventListener('input', (e) => {
+                // Only allow numbers
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text');
+                const numbers = pastedData.match(/[0-9]/g);
+                
+                if (numbers) {
+                    const inputs = e.target.closest('.otp-input-group').querySelectorAll('.otp-digit');
+                    inputs.forEach((input, index) => {
+                        if (numbers[index]) {
+                            input.value = numbers[index];
+                        }
+                    });
+                    inputs[inputs.length - 1].focus();
+                }
+            });
+        });
+
+        function switchTab(tab) {
+            document.querySelectorAll('.verification-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(`${tab}Verification`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function fillOrderId(orderId, status) {
+            const tab = status === 'assigned' ? 'pickup' : 'delivery';
+            switchTab(tab);
+            document.getElementById(`${tab}OrderId`).value = orderId;
+            document.querySelector(`#${tab}Verification .otp-digit`).focus();
+        }
+
+        function verifyPickupOTP(event) {
+            event.preventDefault();
+            const orderId = document.getElementById('pickupOrderId').value;
+            const otpDigits = Array.from(
+                document.querySelector('#pickupVerification .otp-input-group')
+                .getElementsByClassName('otp-digit')
+            ).map(input => input.value).join('');
+
+            verifyOTP('pickup', orderId, otpDigits);
+        }
+
+        function verifyDeliveryOTP(event) {
+            event.preventDefault();
+            const orderId = document.getElementById('deliveryOrderId').value;
+            const otpDigits = Array.from(
+                document.querySelector('#deliveryVerification .otp-input-group')
+                .getElementsByClassName('otp-digit')
+            ).map(input => input.value).join('');
+
+            verifyOTP('delivery', orderId, otpDigits);
+        }
+
+        function verifyOTP(type, orderId, otp) {
+            const endpoint = type === 'pickup' ? 'verify-pickup-otp' : 'verify-delivery-otp';
+            const btn = document.querySelector(`#${type}Verification button`);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            btn.disabled = true;
+
+            fetch(`/api/${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                },
+                body: JSON.stringify({ orderId, otp })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('Verification successful!', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    throw new Error(data.message || 'Invalid OTP');
+                }
+            })
+            .catch(error => {
+                showAlert(error.message || 'Error verifying OTP. Please try again.', 'error');
+                clearOTPInputs(type);
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        function clearOTPInputs(type) {
+            document.querySelectorAll(`#${type}Verification .otp-digit`).forEach(input => {
+                input.value = '';
+            });
+            document.querySelector(`#${type}Verification .otp-digit`).focus();
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = message;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+    </script>
+
+    <style>
+        .verification-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .verification-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--light-green);
+            padding-bottom: 1rem;
+        }
+
+        .verification-form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .otp-input-group {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .otp-digit {
+            width: 45px;
+            height: 45px;
+            text-align: center;
+            font-size: 1.5rem;
+            border: 2px solid var(--light-green);
+            border-radius: 8px;
+            background: white;
+        }
+
+        .recent-parcels {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--light-green);
+        }
+
+        .parcels-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .parcel-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+        }
+
+        .no-parcels {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+            color: var(--accent-green);
+        }
+
+        .no-parcels i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .no-parcels p {
+            margin: 0;
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-error {
+            background: var(--danger);
+            color: white;
+        }
+
+        .alert-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .otp-digit:focus {
+            border-color: var(--primary-green);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(45, 175, 145, 0.5);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</body>
+</html>

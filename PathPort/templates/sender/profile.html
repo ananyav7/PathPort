@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.user_name }}</p>
+            <small>Parcel Sender</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('sender_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('create_parcel') }}">
+                <i class="fas fa-plus"></i> Create Parcel
+            </a></li>
+            <li><a href="{{ url_for('track_parcel') }}">
+                <i class="fas fa-map-marker-alt"></i> Track Parcels
+            </a></li>
+            <li><a href="{{ url_for('sender_profile') }}" class="active">
+                <i class="fas fa-user"></i> My Profile
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <div>
+                <h1>My Profile</h1>
+                <p>Manage your account settings and preferences</p>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">{{ user.name[0].upper() }}</div>
+                <div>
+                    <strong>{{ user.name }}</strong>
+                    <br><small>Member since {{ user.created_at.strftime('%B %Y') }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            <div style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem;">
+                <!-- Profile Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-user-edit"></i> Profile Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="profileForm" method="POST">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="name">
+                                        <i class="fas fa-user"></i> Full Name
+                                    </label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ user.name }}" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="email">
+                                        <i class="fas fa-envelope"></i> Email Address
+                                    </label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ user.email }}" readonly>
+                                    <small class="text-muted">Email cannot be changed for security reasons</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="phone">
+                                        <i class="fas fa-phone"></i> Phone Number
+                                    </label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" 
+                                           value="{{ user.phone }}" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="address">
+                                        <i class="fas fa-map-marker-alt"></i> Primary Address
+                                    </label>
+                                    <textarea class="form-control" id="address" name="address" rows="3"
+                                              placeholder="Enter your primary address for quick parcel creation">{{ user.get('address', '') }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <h4><i class="fas fa-cog"></i> Preferences</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" name="email_notifications" 
+                                               {{ 'checked' if user.get('email_notifications', True) }}>
+                                        <span>Email notifications for parcel updates</span>
+                                    </label>
+                                    
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" name="sms_notifications" 
+                                               {{ 'checked' if user.get('sms_notifications', False) }}>
+                                        <span>SMS notifications for urgent updates</span>
+                                    </label>
+                                    
+                                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" name="marketing_emails" 
+                                               {{ 'checked' if user.get('marketing_emails', False) }}>
+                                        <span>Receive promotional offers</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="fas fa-undo"></i> Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Profile Stats & Actions -->
+                <div>
+                    <!-- Account Statistics -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-bar"></i> Account Statistics</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="stat-item">
+                                <span class="label">Total Parcels</span>
+                                <span class="value">{{ user.get('total_parcels', 0) }}                            </div>
+                            <div class="stat-item">
+                                <span class="label">Member Since</span>
+                                <span class="value">{{ user.created_at.strftime('%b %Y') }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                        </div>
+                        <div class="card-body">
+                            <a href="{{ url_for('create_parcel') }}" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">
+                                <i class="fas fa-plus"></i> Create New Parcel
+                            </a>
+                            <a href="{{ url_for('track_parcel') }}" class="btn btn-outline" style="width: 100%; margin-bottom: 1rem;">
+                                <i class="fas fa-search"></i> Track Parcels
+                            </a>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="downloadData()">
+                                <i class="fas fa-download"></i> Download My Data
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Security Settings -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shield-alt"></i> Security</h3>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-warning" style="width: 100%; margin-bottom: 1rem;" onclick="changePassword()">
+                                <i class="fas fa-key"></i> Change Password
+                            </button>
+                            <button class="btn btn-info" style="width: 100%;" onclick="viewLoginHistory()">
+                                <i class="fas fa-history"></i> Login History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> Change Password</h3>
+                <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            
+            // Simulate API call
+            setTimeout(() => {
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
+                submitBtn.style.background = 'var(--success)';
+                
+                setTimeout(() => {
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+                    submitBtn.style.background = '';
+                    submitBtn.disabled = false;
+                }, 2000);
+                
+                showAlert('Profile updated successfully!', 'success');
+            }, 1000);
+        });
+
+        function resetForm() {
+            if (confirm('Are you sure you want to reset all changes?')) {
+                document.getElementById('profileForm').reset();
+            }
+        }
+
+        function changePassword() {
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+
+        function downloadData() {
+            if (confirm('Download all your data? This will include all parcel history and account information.')) {
+                // Simulate download
+                const link = document.createElement('a');
+                link.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({
+                    message: 'PathPort User Data Export',
+                    user: '{{ user.name }}',
+                    export_date: new Date().toISOString()
+                }));
+                link.download = 'pathport-data-export.json';
+                link.click();
+                
+                showAlert('Data export started! Check your downloads folder.', 'info');
+            }
+        }
+
+        function viewLoginHistory() {
+            showAlert('Login history feature coming soon!', 'info');
+        }
+
+        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                showAlert('Passwords do not match!', 'error');
+                return;
+            }
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                closeModal('passwordModal');
+                showAlert('Password updated successfully!', 'success');
+                this.reset();
+                submitBtn.innerHTML = 'Update Password';
+                submitBtn.disabled = false;
+            }, 1500);
+        });
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} fade-in`;
+            alert.innerHTML = message;
+            alert.style.position = 'fixed';
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }, 3000);
+        }
+
+        // Auto-save preferences
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                showAlert('Preference saved automatically', 'success');
+            });
+        });
+    </script>
+</body>
+</html>
+                            <div class="stat-item">
+                                <span class="label">Successfully Delivered</span>
+                                <span class="value">{{ user.get('delivered_parcels', 0) }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="label">Average Rating</span>
+                                <span class="value">{{ "%.1f"|format(user.rating) }}/5.0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="label">Account Status</span>
+                                <span class="value">
+                                    {% if user.verified %}
+                                        <span class="status-badge status-verified">Verified</span>
+                                    {% else %}
+                                        <span class="status-badge status-pending">Pending</span>
+                                    {% endif %}
+                                </span>
