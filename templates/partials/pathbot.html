@@ -1,0 +1,46 @@
+<!-- PathBot AI Logistics Assistant Floating Widget -->
+<div id="pathbot-tooltip" class="pathbot-tooltip">
+    <i class="fas fa-robot text-success"></i> Track orders & ask PathBot AI!
+</div>
+
+<div id="pathbot-launcher" class="pathbot-launcher" title="Chat with PathBot AI" role="button" aria-label="Open PathBot AI Assistant">
+    <div class="pulse-ring"></div>
+    <i class="fas fa-robot"></i>
+</div>
+
+<div id="pathbot-window" class="pathbot-window" role="dialog" aria-label="PathBot AI Chat">
+    <div class="pathbot-header">
+        <div class="pathbot-brand">
+            <div class="pathbot-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div>
+                <strong style="font-size: 0.95rem; display: block;">PathBot AI</strong>
+                <small style="color: #94a3b8; font-size: 0.75rem;">
+                    <span class="pathbot-status-dot"></span> Online &bull; Logistics AI
+                </small>
+            </div>
+        </div>
+        <div class="pathbot-header-actions">
+            <button id="pathbot-clear" title="Reset Chat" aria-label="Reset Conversation"><i class="fas fa-redo-alt"></i></button>
+            <button id="pathbot-close" title="Minimize Chat" aria-label="Close Chat"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+    
+    <div id="pathbot-messages" class="pathbot-messages">
+        <!-- Messages appended dynamically by pathbot.js -->
+    </div>
+
+    <div id="pathbot-chips" class="pathbot-chips">
+        <!-- Quick action chips -->
+    </div>
+
+    <div class="pathbot-input-area">
+        <input type="text" id="pathbot-input" placeholder="Type Order ID (e.g. PP202611153010) or question..." autocomplete="off">
+        <button type="button" id="pathbot-send" aria-label="Send Message">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/pathbot.js') }}"></script>

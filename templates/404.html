@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page">
+    <div class="login-container fade-in" style="text-align: center; max-width: 500px;">
+        <div class="login-header">
+            <h1 style="font-size: 5rem; color: var(--primary-green); margin: 0; line-height: 1;">404</h1>
+            <h2 style="margin-top: 1rem;"><i class="fas fa-compass"></i> Route Not Found</h2>
+            <p>The destination you are looking for does not exist or has been moved.</p>
+        </div>
+        <div class="login-body">
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                Don't worry, our delivery partners haven't lost your package! Let's get you back on track.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-home"></i> Return Home
+                </a>
+                <a href="javascript:history.back()" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </a>
+            </div>
+        </div>
+        <div class="login-footer">
+            <p>&copy; 2025 PathPort - Smart Crowdsourced Logistics</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Points & Earnings - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .reward-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #e1ebe1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .reward-card h4 {
+            color: var(--primary-green);
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.get('user_name', 'User') }}</p>
+            <small>Delivery Partner</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('delivery_dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('available_parcels') }}">
+                <i class="fas fa-box-open"></i> Available Parcels
+            </a></li>
+            <li><a href="{{ url_for('verify_otp_page') }}">
+                <i class="fas fa-key"></i> Verify OTP
+            </a></li>
+            <li><a href="{{ url_for('my_routes') }}">
+                <i class="fas fa-route"></i> My Routes
+            </a></li>
+            <li><a href="{{ url_for('delivery_earnings') }}" class="active">
+                <i class="fas fa-star"></i> Points & Earnings
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <!-- Mobile Topbar -->
+        <div class="mobile-topbar">
+            <a href="{{ url_for('index') }}" class="brand">
+                <i class="fas fa-shipping-fast"></i> PathPort
+            </a>
+            <button class="mobile-menu-toggle" aria-label="Toggle Navigation Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div class="content-header fade-in">
+            <div>
+                <h1>Points & Commuter Rewards</h1>
+                <p>Track your delivery earnings, milestone badges, and redeem commuter benefits</p>
+            </div>
+            <div>
+                <span class="status-badge status-verified" style="font-size: 1.1rem; padding: 0.5rem 1.25rem;">
+                    <i class="fas fa-star" style="color: #f39c12;"></i> {{ total_points }} Points Balance
+                </span>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Earnings Stats -->
+            <div class="stats-grid">
+                <div class="stat-card fade-in">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-number">{{ total_points }}</div>
+                    <div class="stat-label">Total Points Earned</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon"><i class="fas fa-box-check"></i></div>
+                    <div class="stat-number">{{ deliveries|length }}</div>
+                    <div class="stat-label">Parcels Delivered</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                    <div class="stat-number">₹{{ total_points * 5 }}</div>
+                    <div class="stat-label">Est. Value (₹5/pt)</div>
+                </div>
+                <div class="stat-card fade-in">
+                    <div class="stat-icon"><i class="fas fa-award"></i></div>
+                    <div class="stat-number">
+                        {% if total_points >= 200 %}
+                            Gold
+                        {% elif total_points >= 100 %}
+                            Silver
+                        {% else %}
+                            Bronze
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Commuter Tier</div>
+                </div>
+            </div>
+
+            <!-- Reward Redemption Catalog -->
+            <div class="card fade-in" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <h3><i class="fas fa-gift"></i> Redeem Points for Commute Perks</h3>
+                </div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+                        <div class="reward-card">
+                            <div>
+                                <h4><i class="fas fa-gas-pump" style="color: #e67e22;"></i> Fuel / Metro Pass</h4>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Get ₹250 off on fuel cards or Metro smart card recharge.</p>
+                            </div>
+                            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: var(--primary-green);">50 Points</strong>
+                                <button class="btn btn-secondary" style="font-size: 0.85rem;" {{ 'disabled' if total_points < 50 else '' }}>
+                                    Redeem
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="reward-card">
+                            <div>
+                                <h4><i class="fas fa-coffee" style="color: #8e44ad;"></i> Cafe & Snack Voucher</h4>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Grab a coffee and snack during your commute with ₹500 coupon.</p>
+                            </div>
+                            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: var(--primary-green);">100 Points</strong>
+                                <button class="btn btn-secondary" style="font-size: 0.85rem;" {{ 'disabled' if total_points < 100 else '' }}>
+                                    Redeem
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="reward-card">
+                            <div>
+                                <h4><i class="fas fa-money-bill-wave" style="color: #27ae60;"></i> Direct Bank Transfer</h4>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Cash out your delivery reward points directly into UPI/Bank.</p>
+                            </div>
+                            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="color: var(--primary-green);">200 Points (₹1,000)</strong>
+                                <button class="btn btn-primary" style="font-size: 0.85rem;" {{ 'disabled' if total_points < 200 else '' }}>
+                                    Withdraw
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery History Table -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h3><i class="fas fa-history"></i> Completed Deliveries History</h3>
+                </div>
+                <div class="card-body">
+                    {% if deliveries %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Delivered Date</th>
+                                    <th>Order ID</th>
+                                    <th>Parcel Title</th>
+                                    <th>Route</th>
+                                    <th>Receiver</th>
+                                    <th>Points Earned</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in deliveries %}
+                                <tr>
+                                    <td>{{ item.delivered_at.strftime('%d %b %Y, %I:%M %p') if item.delivered_at else 'Delivered' }}</td>
+                                    <td><strong>{{ item.order_id }}</strong></td>
+                                    <td>{{ item.title }}</td>
+                                    <td>
+                                        <small>{{ item.pickup_location }} &rarr; {{ item.delivery_location }}</small>
+                                    </td>
+                                    <td>{{ item.receiver_name }}</td>
+                                    <td>
+                                        <span class="status-badge status-verified">
+                                            +{{ item.reward_points|default(10) }} pts
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                        <i class="fas fa-receipt" style="font-size: 3rem; margin-bottom: 1rem; color: #ddd;"></i>
+                        <p>No completed deliveries recorded yet. Deliver parcels along your regular route to earn points!</p>
+                        <a href="{{ url_for('available_parcels') }}" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Browse Available Deliveries
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <!-- Flash Messages (Toasts below navbar) -->
+    {% include 'partials/flash_messages.html' %}
+</body>
+</html>

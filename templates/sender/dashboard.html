@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sender Dashboard - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.get('user_name', 'User') }}</p>
+            <small>Parcel Sender</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('sender_dashboard') }}" class="active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('create_parcel') }}">
+                <i class="fas fa-plus"></i> Create Parcel
+            </a></li>
+            <li><a href="{{ url_for('track_parcel') }}">
+                <i class="fas fa-map-marker-alt"></i> Track Parcels
+            </a></li>
+            <li><a href="{{ url_for('sender_profile') }}">
+                <i class="fas fa-user"></i> My Profile
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <!-- Mobile Topbar -->
+        <div class="mobile-topbar">
+            <a href="{{ url_for('index') }}" class="brand">
+                <i class="fas fa-shipping-fast"></i> PathPort
+            </a>
+            <button class="mobile-menu-toggle" aria-label="Toggle Navigation Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div class="dashboard-header">
+            <div class="welcome-section">
+                <h1>Welcome back, {{ session.get('user_name', 'User') }}!</h1>
+                <p>Manage your parcel deliveries and track shipments</p>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">{{ session.get('user_name', 'User')[0].upper() }}</div>
+                <div>
+                    <strong>{{ session.get('user_name', 'User') }}</strong>
+                    <br><small>Parcel Sender</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <div class="quick-actions">
+                <a href="{{ url_for('create_parcel') }}" class="action-card fade-in">
+                    <div class="action-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h3>Create New Parcel</h3>
+                    <p>Send a new parcel with our trusted delivery network</p>
+                </a>
+                
+                <a href="{{ url_for('track_parcel') }}" class="action-card fade-in">
+                    <div class="action-icon">
+                        <i class="fas fa-search-location"></i>
+                    </div>
+                    <h3>Track Parcels</h3>
+                    <p>Monitor your parcel delivery status in real-time</p>
+                </a>
+                
+                <a href="{{ url_for('sender_profile') }}" class="action-card fade-in">
+                    <div class="action-icon">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <h3>My Profile</h3>
+                    <p>Update your profile and delivery preferences</p>
+                </a>
+            </div>
+
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-number">{{ parcels|length }}</div>
+                    <div class="stat-label">Total Parcels</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-number">{{ parcels|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                    <div class="stat-label">Pending Delivery</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="stat-number">{{ parcels|selectattr('status', 'in', ['assigned', 'picked_up'])|list|length }}</div>
+                    <div class="stat-label">In Transit</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number">{{ parcels|selectattr('status', 'equalto', 'delivered')|list|length }}</div>
+                    <div class="stat-label">Delivered</div>
+                </div>
+            </div>
+
+            
+            <!-- Eco-Champion Carbon Offset Card -->
+            {% set delivered_count = parcels|selectattr('status', 'equalto', 'delivered')|list|length %}
+            {% set co2_saved = (delivered_count * 1.85)|round(1) %}
+            <div class="eco-champion-card fade-in">
+                <div class="eco-champion-info">
+                    <h4>
+                        <i class="fas fa-leaf" style="color: #6ee7b7;"></i> 
+                        Green Footprint Champion 
+                        <span class="status-badge" style="background: rgba(110,231,183,0.2); color: #6ee7b7; border-color: rgba(110,231,183,0.3); font-size: 0.72rem; margin-left: 0.5rem;">
+                            {{ '🌿 Gold Eco Shipper' if delivered_count >= 5 else ('🌱 Silver Green Pioneer' if delivered_count >= 1 else '🌱 Eco Starter') }}
+                        </span>
+                    </h4>
+                    <p>By routing parcels with daily commuters instead of dedicated delivery vans, your shipments have directly avoided vehicular emissions across Mumbai.</p>
+                </div>
+                <div class="eco-metrics-pill-group">
+                    <div class="eco-pill">
+                        <div class="eco-pill-num">{{ co2_saved }} kg</div>
+                        <div class="eco-pill-label">CO&sup2; Prevented</div>
+                    </div>
+                    <div class="eco-pill">
+                        <div class="eco-pill-num">{{ (co2_saved / 15)|round(1) }}</div>
+                        <div class="eco-pill-label">Trees Equivalent</div>
+                    </div>
+                    <div class="eco-pill">
+                        <div class="eco-pill-num">{{ session.get('points_earned', delivered_count * 20) }}</div>
+                        <div class="eco-pill-label">Green Points</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-parcels">
+                <div class="section-header">
+                    <h3><i class="fas fa-history"></i> Recent Parcels</h3>
+                    <a href="{{ url_for('create_parcel') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Parcel
+                    </a>
+                </div>
+                
+                {% if parcels %}
+                    {% for parcel in parcels[:5] %}
+                    <div class="parcel-item fade-in">
+                        <div class="parcel-icon">
+                            {% if parcel.image_path %}
+                                <img src="{{ url_for('static', filename=parcel.image_path) }}" alt="Package" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
+                            {% else %}
+                                <i class="fas fa-box"></i>
+                            {% endif %}
+                        </div>
+                        <div class="parcel-details">
+                            <div class="parcel-title">{{ parcel.title }}</div>
+                            <div class="parcel-info">{{ parcel.description or 'No description provided' }}</div>
+                            <div class="parcel-route">
+                                <i class="fas fa-map-marker-alt text-success"></i> {{ parcel.pickup_location }}
+                                <i class="fas fa-arrow-right" style="margin: 0 0.5rem;"></i>
+                                <i class="fas fa-flag-checkered text-danger"></i> {{ parcel.delivery_location }}
+                            </div>
+                            <small class="text-muted">Created: {{ parcel.created_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
+                        </div>
+                        <div class="parcel-actions">
+                            <span class="status-badge status-{{ parcel.status.replace('_', '-') }}">
+                                {{ parcel.status.replace('_', ' ').title() }}
+                            </span>
+                            <span class="urgency-badge urgency-{{ parcel.urgency }}">
+                                {{ parcel.urgency.title() }}
+                            </span>
+                            {% if parcel.status in ['assigned', 'picked_up'] %}
+                            <div style="display: flex; gap: 0.4rem; margin-top: 0.35rem;">
+                                <a href="tel:{{ parcel.delivery_partner_phone or '+919876543210' }}" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" title="Call Delivery Partner">
+                                    <i class="fas fa-phone text-success"></i> Call
+                                </a>
+                                <a href="https://wa.me/{{ (parcel.delivery_partner_phone or '919876543210')|replace('+', '')|replace('-', '')|replace(' ', '') }}?text=Hi%2C%20regarding%20PathPort%20Order%20{{ parcel.order_id }}" target="_blank" class="btn btn-success btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" title="WhatsApp Delivery Partner">
+                                    <i class="fab fa-whatsapp"></i> Chat
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% if parcel.status == 'delivered' %}
+                                {% if parcel.is_rated %}
+                                    <span class="status-badge status-verified" style="background: #fef3c7; color: #b45309; border-color: #fde68a;">
+                                        <i class="fas fa-star" style="color: #f59e0b;"></i> {{ parcel.rating }}/5
+                                    </span>
+                                {% else %}
+                                    <button onclick="openRatingModal('{{ parcel._id }}', '{{ parcel.order_id }}', '{{ parcel.title }}')" class="btn btn-warning" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                                        <i class="fas fa-star"></i> Rate Partner
+                                    </button>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if parcels|length > 5 %}
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <a href="{{ url_for('track_parcel') }}" class="btn btn-outline">
+                            <i class="fas fa-eye"></i> View All Parcels ({{ parcels|length }})
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div style="text-align: center; padding: 3rem;">
+                        <div style="font-size: 4rem; color: var(--light-green); margin-bottom: 1rem;">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <h3 style="color: var(--primary-green); margin-bottom: 1rem;">No Parcels Yet</h3>
+                        <p style="color: var(--accent-green); margin-bottom: 2rem;">
+                            Start by creating your first parcel delivery request
+                        </p>
+                        <a href="{{ url_for('create_parcel') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus"></i> Create Your First Parcel
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages (Toasts below navbar) -->
+    {% include 'partials/flash_messages.html' %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+
+        // Real-time status updates simulation
+        setInterval(function() {
+            const statusBadges = document.querySelectorAll('.status-badge');
+            statusBadges.forEach(badge => {
+                if (badge.textContent.includes('Assigned') && Math.random() > 0.9) {
+                    badge.textContent = 'Picked Up';
+                    badge.className = 'status-badge status-picked-up';
+                    badge.classList.add('pulse');
+                    setTimeout(() => badge.classList.remove('pulse'), 2000);
+                }
+            });
+        }, 15000);
+
+        // Interactive card hover effects
+        document.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-12px) scale(1)';
+            });
+        });
+
+        // Parcel status color coding
+        document.querySelectorAll('.parcel-item').forEach(item => {
+            const statusBadge = item.querySelector('.status-badge');
+            if (statusBadge) {
+                const status = statusBadge.textContent.toLowerCase();
+                if (status.includes('delivered')) {
+                    item.style.borderLeft = '4px solid var(--success)';
+                } else if (status.includes('picked')) {
+                    item.style.borderLeft = '4px solid var(--primary-green)';
+                } else if (status.includes('assigned')) {
+                    item.style.borderLeft = '4px solid var(--info)';
+                } else {
+                    item.style.borderLeft = '4px solid var(--warning)';
+                }
+            }
+        });
+
+        // Dashboard statistics animation
+        document.querySelectorAll('.stat-number').forEach((stat, index) => {
+            const finalValue = parseInt(stat.textContent);
+            stat.textContent = '0';
+            
+            let current = 0;
+            const increment = finalValue / 30;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= finalValue) {
+                    stat.textContent = finalValue;
+                    clearInterval(timer);
+                } else {
+                    stat.textContent = Math.floor(current);
+                }
+            }, 50 + (index * 20));
+        });
+
+        // Welcome message based on time
+        const hour = new Date().getHours();
+        const welcomeText = document.querySelector('.welcome-section h1');
+        if (welcomeText) {
+            if (hour < 12) {
+                welcomeText.innerHTML = `Good morning, {{ session.get('user_name', 'User') }}!`;
+            } else if (hour < 17) {
+                welcomeText.innerHTML = `Good afternoon, {{ session.get('user_name', 'User') }}!`;
+            } else {
+                welcomeText.innerHTML = `Good evening, {{ session.get('user_name', 'User') }}!`;
+            }
+        }
+    </script>
+
+    <!-- Rating Modal -->
+    <div id="ratingModal" class="modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);">
+        <div style="background: white; margin: 10% auto; padding: 2rem; border-radius: 12px; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative;">
+            <span onclick="closeRatingModal()" style="position: absolute; right: 20px; top: 15px; font-size: 1.5rem; cursor: pointer;">&times;</span>
+            <h3 style="color: var(--primary-green); margin-top: 0;"><i class="fas fa-star" style="color: #f59e0b;"></i> Rate Delivery Partner</h3>
+            <p id="ratingParcelInfo" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">Rate your delivery experience</p>
+            
+            <form id="ratingForm" onsubmit="submitDeliveryRating(event)">
+                <input type="hidden" id="rateParcelId" value="">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div id="starContainer" style="font-size: 2rem; color: #cbd5e1; cursor: pointer;">
+                        <i class="fas fa-star" data-val="1" onclick="setRating(1)"></i>
+                        <i class="fas fa-star" data-val="2" onclick="setRating(2)"></i>
+                        <i class="fas fa-star" data-val="3" onclick="setRating(3)"></i>
+                        <i class="fas fa-star" data-val="4" onclick="setRating(4)"></i>
+                        <i class="fas fa-star" data-val="5" onclick="setRating(5)"></i>
+                    </div>
+                    <small id="ratingLabel" style="font-weight: 600; color: var(--primary-green); margin-top: 0.5rem; display: block;">5 Stars - Excellent Service</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="ratingComment">Review Comments (Optional)</label>
+                    <textarea id="ratingComment" class="form-control" rows="3" placeholder="Share feedback about the commuter's punctuality and handling..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeRatingModal()">Cancel</button>
+                    <button type="submit" id="submitRateBtn" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Rating</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let selectedRating = 5;
+
+        function setRating(val) {
+            selectedRating = val;
+            const stars = document.querySelectorAll('#starContainer i');
+            stars.forEach((s, idx) => {
+                s.style.color = (idx < val) ? '#f59e0b' : '#cbd5e1';
+            });
+            const labels = {
+                1: '1 Star - Needs Improvement',
+                2: '2 Stars - Fair Service',
+                3: '3 Stars - Satisfactory',
+                4: '4 Stars - Very Good Commute',
+                5: '5 Stars - Excellent Experience'
+            };
+            document.getElementById('ratingLabel').innerText = labels[val] || `${val} Stars`;
+        }
+
+        function openRatingModal(parcelId, orderId, title) {
+            document.getElementById('rateParcelId').value = parcelId;
+            document.getElementById('ratingParcelInfo').innerText = `Order: ${orderId} - ${title}`;
+            setRating(5);
+            document.getElementById('ratingModal').style.display = 'block';
+        }
+
+        function closeRatingModal() {
+            document.getElementById('ratingModal').style.display = 'none';
+        }
+
+        function submitDeliveryRating(e) {
+            e.preventDefault();
+            const parcelId = document.getElementById('rateParcelId').value;
+            const comment = document.getElementById('ratingComment').value;
+            const btn = document.getElementById('submitRateBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+            fetch(`/api/rate-delivery/${parcelId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rating: selectedRating, comment: comment })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Thank you! Your rating has been recorded.');
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Error submitting rating');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Submit Rating';
+                }
+            })
+            .catch(err => {
+                alert('An error occurred. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = 'Submit Rating';
+            });
+        }
+    </script>
+{% include 'partials/pathbot.html' %}
+</body>
+</html>

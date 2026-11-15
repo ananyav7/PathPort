@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.env
+.env.local
+!.env.example
+venv/
+env/
+.pytest_cache/
+
+# Uploads
+static/uploads/parcels/*
+!static/uploads/parcels/.gitkeep

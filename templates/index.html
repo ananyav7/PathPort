@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathPort - AI-Enabled Crowdsourced Parcel Delivery</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('index') }}" class="brand">
+                <i class="fas fa-shipping-fast"></i> PathPort
+            </a>
+            <button class="mobile-menu-toggle" aria-label="Toggle Navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="#simulator">Simulator</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#corridors">Active Routes</a></li>
+                <li><a href="#about">How it Works</a></li>
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+                <li><a href="{{ url_for('register') }}" class="btn btn-primary" style="padding: 0.4rem 1rem; color: white;">Register</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Live Commute & Activity Ticker -->
+    <div class="activity-ticker-container">
+        <div class="container" style="overflow: hidden;">
+            <div class="ticker-content">
+                <div class="ticker-item"><span class="ticker-dot"></span> <strong>Priya S.</strong> accepted delivery: Borivali &rarr; Dadar (saved 1.2 kg CO&sup2;)</div>
+                <div class="ticker-item"><span class="ticker-dot"></span> <strong>Arun P.</strong> verified OTP in Powai (+25 PathPort Pts earned)</div>
+                <div class="ticker-item"><span class="ticker-dot"></span> <strong>Rohit V.</strong> in transit: Andheri East &rarr; Lower Parel</div>
+                <div class="ticker-item"><span class="ticker-dot"></span> <strong>Vikram M.</strong> registered express medical sample shipment</div>
+                <div class="ticker-item"><span class="ticker-dot"></span> <strong>Raj S.</strong> rated commuter 5.0 &starf; &ldquo;Flawless handover!&rdquo;</div>
+                <div class="ticker-item"><span class="ticker-dot"></span> <strong>🌿 Eco-Milestone:</strong> 28.4+ Metric Tons of CO&sup2; avoided this year!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section with Interactive Calculator Grid -->
+    <section class="hero" style="padding: 4rem 0 3rem; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem; align-items: center;">
+                <!-- Left Hero Intro -->
+                <div>
+                    <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.35rem 0.9rem; border-radius: 20px; font-size: 0.85rem; color: #6ee7b7; margin-bottom: 1.25rem;">
+                        <i class="fas fa-sparkles"></i> AI-Powered Hyperlocal Crowd-Shipping
+                    </div>
+                    <h1 style="font-size: 2.8rem; font-weight: 800; line-height: 1.15; margin-bottom: 1.25rem; color: #ffffff;">
+                        Turn Everyday Commutes into <span style="color: var(--primary-green);">Green Deliveries</span>
+                    </h1>
+                    <p style="font-size: 1.12rem; color: #94a3b8; line-height: 1.6; margin-bottom: 2rem;">
+                        Connect with trusted commuters traveling your route. Senders save up to 40% on express delivery, commuters earn reward payouts with 0 detours, and every delivery reduces city traffic emissions.
+                    </p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <a href="{{ url_for('register') }}?role=sender" class="btn btn-primary" style="padding: 0.85rem 1.6rem; font-size: 1rem;">
+                            <i class="fas fa-paper-plane"></i> Send a Parcel
+                        </a>
+                        <a href="{{ url_for('register') }}?role=delivery_partner" class="btn btn-outline" style="padding: 0.85rem 1.6rem; font-size: 1rem; color: #ffffff; border-color: rgba(255,255,255,0.3);">
+                            <i class="fas fa-route"></i> Earn While Commuting
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Interactive Commute Calculator Widget -->
+                <div id="simulator">
+                    <div class="hero-simulator-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                            <h3 style="color: #0f172a; margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-calculator" style="color: var(--primary-green);"></i> Live Commute Simulator
+                            </h3>
+                            <span style="background: #ecfdf5; color: #065f46; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 12px;">
+                                Dynamic Estimator
+                            </span>
+                        </div>
+
+                        <!-- Distance Slider -->
+                        <div class="sim-slider-group">
+                            <div class="sim-slider-header">
+                                <span>Commute Distance</span>
+                                <span id="distVal" style="color: var(--primary-green); font-weight: 700;">14 km</span>
+                            </div>
+                            <input type="range" id="distSlider" class="sim-slider" min="2" max="40" value="14" step="1">
+                        </div>
+
+                        <!-- Weight Slider -->
+                        <div class="sim-slider-group">
+                            <div class="sim-slider-header">
+                                <span>Package Weight</span>
+                                <span id="weightVal" style="color: var(--primary-green); font-weight: 700;">2.0 kg</span>
+                            </div>
+                            <input type="range" id="weightSlider" class="sim-slider" min="0.5" max="10" value="2.0" step="0.5">
+                        </div>
+
+                        <!-- Commute Mode Options -->
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem;">Transport Mode:</div>
+                        <div class="sim-transport-options">
+                            <button type="button" class="sim-transport-btn active" data-factor="1.0" onclick="selectSimMode(this, 1.0, 0.18)">
+                                <i class="fas fa-train"></i> Metro / Train
+                            </button>
+                            <button type="button" class="sim-transport-btn" data-factor="1.1" onclick="selectSimMode(this, 1.1, 0.12)">
+                                <i class="fas fa-motorcycle"></i> Two-Wheeler
+                            </button>
+                            <button type="button" class="sim-transport-btn" data-factor="1.25" onclick="selectSimMode(this, 1.25, 0.24)">
+                                <i class="fas fa-car-side"></i> Carpool
+                            </button>
+                        </div>
+
+                        <!-- Dynamic Metrics Grid -->
+                        <div class="sim-metrics-grid">
+                            <div>
+                                <div class="sim-metric-val" id="simEarning">&#8377;195</div>
+                                <div class="sim-metric-lbl">Partner Payout</div>
+                            </div>
+                            <div>
+                                <div class="sim-metric-val" id="simCO2">2.5 kg</div>
+                                <div class="sim-metric-lbl">CO&sup2; Avoided</div>
+                            </div>
+                            <div>
+                                <div class="sim-metric-val" id="simPoints">+25</div>
+                                <div class="sim-metric-lbl">Reward Points</div>
+                            </div>
+                            <div>
+                                <div class="sim-metric-val" id="simTime">35 min</div>
+                                <div class="sim-metric-lbl">Est. Transit</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1.25rem;">
+                            <a href="{{ url_for('register') }}" class="btn btn-primary" style="width: 100%; text-align: center;">
+                                <i class="fas fa-bolt"></i> Join &amp; Claim Today's Deliveries
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platform Impact Statistics Banner -->
+    <section style="background: #ffffff; padding: 2.5rem 0; border-bottom: 1px solid var(--border-color);">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; text-align: center;">
+                <div style="padding: 1rem;">
+                    <div style="font-size: 2.4rem; font-weight: 800; color: var(--primary-green); margin-bottom: 0.25rem;">12,850+</div>
+                    <div style="color: var(--text-dark); font-weight: 600; font-size: 0.95rem;">Crowdsourced Deliveries</div>
+                    <small style="color: var(--text-muted);">Across Mumbai Metropolitan Region</small>
+                </div>
+                <div style="padding: 1rem;">
+                    <div style="font-size: 2.4rem; font-weight: 800; color: #059669; margin-bottom: 0.25rem;">28.4 Tons</div>
+                    <div style="color: var(--text-dark); font-weight: 600; font-size: 0.95rem;">CO&sup2; Emissions Saved</div>
+                    <small style="color: var(--text-muted);">Equivalent to 1,420 trees planted</small>
+                </div>
+                <div style="padding: 1rem;">
+                    <div style="font-size: 2.4rem; font-weight: 800; color: var(--primary-green); margin-bottom: 0.25rem;">99.4%</div>
+                    <div style="color: var(--text-dark); font-weight: 600; font-size: 0.95rem;">On-Time Delivery Rate</div>
+                    <small style="color: var(--text-muted);">Verified with 2-Factor OTPs</small>
+                </div>
+                <div style="padding: 1rem;">
+                    <div style="font-size: 2.4rem; font-weight: 800; color: #f59e0b; margin-bottom: 0.25rem;">4.9 &starf;</div>
+                    <div style="color: var(--text-dark); font-weight: 600; font-size: 0.95rem;">Community Satisfaction</div>
+                    <small style="color: var(--text-muted);">Over 5,200+ commuter reviews</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose PathPort Features -->
+    <section class="features" id="features" style="padding: 4.5rem 0; background: var(--bg-light);">
+        <div class="container">
+            <div class="text-center" style="margin-bottom: 3rem;">
+                <h2 style="color: #0f172a; margin-bottom: 0.75rem; font-size: 2.4rem; font-weight: 800;">
+                    Engineered for Smarter Urban Logistics
+                </h2>
+                <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 620px; margin: 0 auto;">
+                    PathPort bridges everyday commuters with local parcel delivery needs using smart route matching and zero extra vehicular trips.
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card slide-in-left">
+                    <i class="fas fa-brain" style="color: var(--primary-green);"></i>
+                    <h3>AI Route Corridor Matching</h3>
+                    <p>Our intelligent system matches parcels with commuters based on spatial corridors, departure timing, and transit modes.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <i class="fas fa-leaf" style="color: #059669;"></i>
+                    <h3>Zero Detour Carbon Offset</h3>
+                    <p>Reduce carbon emissions by utilizing transit already in motion. Deliveries produce zero additional vehicular miles.</p>
+                </div>
+                <div class="feature-card slide-in-right">
+                    <i class="fas fa-wallet" style="color: #2563eb;"></i>
+                    <h3>Earn Daily While Traveling</h3>
+                    <p>Offset your commute fuel or rail pass costs by delivering light packages along your everyday route.</p>
+                </div>
+                <div class="feature-card slide-in-left">
+                    <i class="fas fa-shield-alt" style="color: #7c3aed;"></i>
+                    <h3>Dual 6-Digit OTP Security</h3>
+                    <p>State-of-the-art dual OTP validation ensures secure sender handover and confirmed recipient receipt every single time.</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <i class="fas fa-map-marked-alt" style="color: #ea580c;"></i>
+                    <h3>Live GPS Milestone Tracking</h3>
+                    <p>Track your shipment at every checkpoint with live transit updates and instant WhatsApp &amp; Call partner connectivity.</p>
+                </div>
+                <div class="feature-card slide-in-right">
+                    <i class="fas fa-bolt" style="color: #d97706;"></i>
+                    <h3>Same-Day Hyperlocal Speed</h3>
+                    <p>Since commuters are already traveling, deliveries happen faster than traditional multi-hub warehouse couriers.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Commute Corridors in Mumbai -->
+    <section id="corridors" style="padding: 4.5rem 0; background: #ffffff;">
+        <div class="container">
+            <div class="text-center" style="margin-bottom: 3rem;">
+                <h2 style="color: #0f172a; font-size: 2.2rem; font-weight: 800; margin-bottom: 0.75rem;">
+                    Active Commuter Corridors in Mumbai
+                </h2>
+                <p style="color: var(--text-muted); font-size: 1.05rem; max-width: 600px; margin: 0 auto;">
+                    Hundreds of commuters travel these high-frequency transit lines daily, ready to deliver your packages in real-time.
+                </p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <!-- Western Line -->
+                <div class="card" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="background: #eff6ff; color: #1d4ed8; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 12px;">Western Transit</span>
+                        <small style="color: #10b981; font-weight: 600;"><i class="fas fa-bolt"></i> High Demand</small>
+                    </div>
+                    <h3 style="font-size: 1.15rem; color: #0f172a; margin-bottom: 0.5rem;">Borivali &harr; Bandra &harr; Dadar</h3>
+                    <p style="color: #64748b; font-size: 0.88rem; margin-bottom: 1rem;">Over 18 active daily commuters. Average parcel transit time: 42 mins via Western Rail &amp; SV Road.</p>
+                    <div style="font-size: 0.82rem; color: #475569; display: flex; justify-content: space-between;">
+                        <span>Avg. Payout: <strong>&#8377;180 - &#8377;260</strong></span>
+                        <span style="color: #059669;"><strong>1.8 kg CO&sup2;</strong> saved/trip</span>
+                    </div>
+                </div>
+
+                <!-- Central Tech Corridor -->
+                <div class="card" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="background: #f0fdf4; color: #15803d; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 12px;">Tech &amp; Corporate Hub</span>
+                        <small style="color: #10b981; font-weight: 600;"><i class="fas fa-bolt"></i> Peak Hours</small>
+                    </div>
+                    <h3 style="font-size: 1.15rem; color: #0f172a; margin-bottom: 0.5rem;">Andheri &harr; Powai &harr; BKC</h3>
+                    <p style="color: #64748b; font-size: 0.88rem; margin-bottom: 1rem;">Connecting major IT parks, financial centers, and media studios. Express parcel handovers.</p>
+                    <div style="font-size: 0.82rem; color: #475569; display: flex; justify-content: space-between;">
+                        <span>Avg. Payout: <strong>&#8377;200 - &#8377;320</strong></span>
+                        <span style="color: #059669;"><strong>2.3 kg CO&sup2;</strong> saved/trip</span>
+                    </div>
+                </div>
+
+                <!-- Metro Line 1 & 2 Corridor -->
+                <div class="card" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="background: #faf5ff; color: #7e22ce; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 12px;">Metro Line Fast-Track</span>
+                        <small style="color: #10b981; font-weight: 600;"><i class="fas fa-bolt"></i> Fastest</small>
+                    </div>
+                    <h3 style="font-size: 1.15rem; color: #0f172a; margin-bottom: 0.5rem;">Versova &harr; Andheri &harr; Ghatkopar</h3>
+                    <p style="color: #64748b; font-size: 0.88rem; margin-bottom: 1rem;">Traffic-free zero-emission delivery via metro stations. Average parcel transit time: 24 mins.</p>
+                    <div style="font-size: 0.82rem; color: #475569; display: flex; justify-content: space-between;">
+                        <span>Avg. Payout: <strong>&#8377;150 - &#8377;220</strong></span>
+                        <span style="color: #059669;"><strong>2.6 kg CO&sup2;</strong> saved/trip</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="about" style="background: var(--bg-light); padding: 4.5rem 0;">
+        <div class="container">
+            <div class="text-center" style="margin-bottom: 3rem;">
+                <h2 style="color: #0f172a; margin-bottom: 0.75rem; font-size: 2.2rem; font-weight: 800;">
+                    How PathPort Works in 3 Simple Steps
+                </h2>
+                <p style="color: var(--text-muted); font-size: 1.05rem;">Fast, secure, and intuitive for both senders and commuters</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card text-center">
+                    <div style="background: var(--primary-green); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 1.4rem; font-weight: bold;">1</div>
+                    <h3 style="margin-bottom: 0.5rem;">1. Post Your Parcel</h3>
+                    <p>Enter origin, destination, parcel photo, and size. Our system calculates optimal rewards and carbon offset instantly.</p>
+                </div>
+                <div class="feature-card text-center">
+                    <div style="background: var(--secondary-green); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 1.4rem; font-weight: bold;">2</div>
+                    <h3 style="margin-bottom: 0.5rem;">2. Match with Commuter</h3>
+                    <p>Commuters already traveling along that route review the request and accept. Verified contact info and route details are shared.</p>
+                </div>
+                <div class="feature-card text-center">
+                    <div style="background: var(--accent-green); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 1.4rem; font-weight: bold;">3</div>
+                    <h3 style="margin-bottom: 0.5rem;">3. Dual OTP Handover</h3>
+                    <p>Commuter verifies pickup with a 6-digit sender OTP, travels their route, and confirms final handover with the receiver's delivery OTP.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Track Search Section -->
+    <section id="track-order" style="background: #ffffff; padding: 4.5rem 0; border-top: 1px solid var(--border-color);">
+        <div class="container">
+            <div class="text-center" style="margin-bottom: 2rem;">
+                <h2 style="color: #0f172a; margin-bottom: 0.5rem; font-size: 2.2rem; font-weight: 800;">
+                    Track Your Shipment Live
+                </h2>
+                <p style="color: var(--text-muted); font-size: 1.05rem;">Enter your Order ID to monitor delivery milestones and commuter location</p>
+            </div>
+            <div style="max-width: 520px; margin: 0 auto;">
+                <div style="display: flex; gap: 0.5rem; background: #ffffff; padding: 0.5rem; border-radius: 12px; border: 2px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.04);">
+                    <input type="text" id="orderId" placeholder="e.g. PP202611153010" class="form-control" 
+                           style="border: none; padding: 0.75rem 1rem; font-size: 1.05rem; outline: none; width: 100%;">
+                    <button onclick="trackOrder()" class="btn btn-primary" style="white-space: nowrap; padding: 0.75rem 1.5rem;">
+                        <i class="fas fa-search"></i> Track
+                    </button>
+                </div>
+                <div style="margin-top: 0.85rem; text-align: center; font-size: 0.82rem; color: #64748b;">
+                    Try demo orders: 
+                    <a href="javascript:void(0)" onclick="quickTestTrack('PP202611153010')" style="color: var(--primary-green); text-decoration: underline; margin: 0 4px;">PP202611153010 (In Transit)</a> |
+                    <a href="javascript:void(0)" onclick="quickTestTrack('PP202611152010')" style="color: var(--primary-green); text-decoration: underline; margin: 0 4px;">PP202611152010 (Assigned)</a> |
+                    <a href="javascript:void(0)" onclick="quickTestTrack('PP202611144010')" style="color: var(--primary-green); text-decoration: underline; margin: 0 4px;">PP202611144010 (Delivered)</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="background: #0f172a; color: #ffffff; padding: 3.5rem 0 2rem;">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem;">
+                <div>
+                    <h3 style="margin-bottom: 1rem; color: #ffffff; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-shipping-fast" style="color: var(--primary-green);"></i> PathPort
+                    </h3>
+                    <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.6;">
+                        Sustainable, AI-powered crowdsourced parcel delivery platform turning daily commuting routes into efficient hyperlocal logistics networks.
+                    </p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: #f8fafc;">Platform</h4>
+                    <ul style="list-style: none; padding: 0; margin: 0; line-height: 2;">
+                        <li><a href="{{ url_for('login') }}" style="color: #94a3b8; text-decoration: none;">Login</a></li>
+                        <li><a href="{{ url_for('register') }}" style="color: #94a3b8; text-decoration: none;">Create Account</a></li>
+                        <li><a href="#simulator" style="color: #94a3b8; text-decoration: none;">Commute Calculator</a></li>
+                        <li><a href="#features" style="color: #94a3b8; text-decoration: none;">Key Features</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: #f8fafc;">Support &amp; Contact</h4>
+                    <p style="color: #94a3b8; font-size: 0.88rem; margin-bottom: 0.5rem;"><i class="fas fa-envelope text-success"></i> support@pathport.com</p>
+                    <p style="color: #94a3b8; font-size: 0.88rem; margin-bottom: 0.5rem;"><i class="fas fa-phone text-success"></i> +91-800-PATHPORT</p>
+                    <p style="color: #94a3b8; font-size: 0.88rem;"><i class="fas fa-map-marker-alt text-success"></i> Mumbai, Maharashtra, India</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: #f8fafc;">Community</h4>
+                    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1rem;">Join over 5,000+ green commuters in the Mumbai metropolitan area.</p>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <a href="#" style="width: 36px; height: 36px; border-radius: 50%; background: #1e293b; color: #ffffff; display: flex; align-items: center; justify-content: center; text-decoration: none;"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" style="width: 36px; height: 36px; border-radius: 50%; background: #1e293b; color: #ffffff; display: flex; align-items: center; justify-content: center; text-decoration: none;"><i class="fab fa-twitter"></i></a>
+                        <a href="#" style="width: 36px; height: 36px; border-radius: 50%; background: #1e293b; color: #ffffff; display: flex; align-items: center; justify-content: center; text-decoration: none;"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr style="margin: 2.5rem 0 1.5rem; border: none; border-top: 1px solid #1e293b;">
+            <div style="text-align: center; color: #64748b; font-size: 0.85rem;">
+                <p>&copy; 2026 PathPort Logistics. All rights reserved. | Empowering Sustainable Urban Logistics</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- PathBot Floating AI Logistics Assistant Partial -->
+    {% include 'partials/pathbot.html' %}
+
+    <!-- Flash Messages (Toasts positioned safely below navbar) -->
+    {% include 'partials/flash_messages.html' %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Interactive Commuter Simulator Logic
+        let simModeFactor = 1.0;
+        let co2PerKm = 0.18; // kg CO2 avoided per km
+
+        function updateSimulator() {
+            const dist = parseFloat(document.getElementById('distSlider').value);
+            const weight = parseFloat(document.getElementById('weightSlider').value);
+
+            document.getElementById('distVal').textContent = dist + ' km';
+            document.getElementById('weightVal').textContent = weight.toFixed(1) + ' kg';
+
+            // Calculate estimated commuter reward: Base 50 + (dist * 9.5) + (weight * 12)
+            const payout = Math.round((50 + (dist * 9.5) + (weight * 12)) * simModeFactor);
+            const points = Math.round(payout / 10);
+            const co2Saved = (dist * co2PerKm * 1.05).toFixed(1);
+            const estTimeMins = Math.round(15 + (dist * 1.6));
+
+            document.getElementById('simEarning').innerHTML = '&#8377;' + payout;
+            document.getElementById('simCO2').textContent = co2Saved + ' kg';
+            document.getElementById('simPoints').textContent = '+' + points;
+            document.getElementById('simTime').textContent = estTimeMins + ' min';
+        }
+
+        function selectSimMode(btn, factor, co2Rate) {
+            document.querySelectorAll('.sim-transport-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            simModeFactor = factor;
+            co2PerKm = co2Rate;
+            updateSimulator();
+        }
+
+        document.getElementById('distSlider').addEventListener('input', updateSimulator);
+        document.getElementById('weightSlider').addEventListener('input', updateSimulator);
+
+        function trackOrder() {
+            const orderId = document.getElementById('orderId').value.trim();
+            if (orderId) {
+                window.location.href = `/track/${orderId}`;
+            } else {
+                alert('Please enter a valid order ID');
+            }
+        }
+
+        function quickTestTrack(oid) {
+            document.getElementById('orderId').value = oid;
+            window.location.href = `/track/${oid}`;
+        }
+
+        // Initialize Simulator once DOM is ready
+        updateSimulator();
+    </script>
+</body>
+</html>

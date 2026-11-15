@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Parcel {{ parcel.order_id }} - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .tracking-timeline {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 2.5rem 0;
+        }
+        .tracking-timeline::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 5%;
+            right: 5%;
+            height: 4px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+        .timeline-step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+        }
+        .step-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem;
+            color: #888;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        .timeline-step.completed .step-icon {
+            background: var(--primary-green);
+            border-color: var(--primary-green);
+            color: white;
+        }
+        .timeline-step.active .step-icon {
+            background: var(--secondary-green);
+            border-color: var(--primary-green);
+            color: white;
+            box-shadow: 0 0 0 6px rgba(45, 90, 39, 0.2);
+            animation: pulse-ring 2s infinite;
+        }
+        .timeline-step.completed .step-title,
+        .timeline-step.active .step-title {
+            color: var(--primary-green);
+            font-weight: 700;
+        }
+        .step-title {
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+            color: #666;
+        }
+        .step-time {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        #trackingMap {
+            height: 350px;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            border: 1px solid #ddd;
+            z-index: 1;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .detail-box {
+            background: #f8faf8;
+            border: 1px solid #e2ebe2;
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('index') }}" class="brand">
+                <i class="fas fa-shipping-fast"></i> PathPort
+            </a>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+                <li><a href="{{ url_for('register') }}">Register</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2.5rem 1rem; max-width: 1050px;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+            <div>
+                <h1 style="color: var(--primary-green); margin: 0; font-size: 2rem;">
+                    <i class="fas fa-box"></i> Order #{{ parcel.order_id }}
+                </h1>
+                <p style="color: var(--text-muted); margin-top: 0.25rem;">
+                    Created on {{ parcel.created_at.strftime('%d %B %Y, %I:%M %p') if parcel.created_at else 'Recent' }}
+                </p>
+            </div>
+            <div>
+                <span class="status-badge status-{{ parcel.status.replace('_', '-') }}" style="font-size: 1rem; padding: 0.6rem 1.2rem;">
+                    <i class="fas fa-circle" style="font-size: 0.6rem;"></i> {{ parcel.status.replace('_', ' ')|title }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Timeline Progress -->
+        {% set statuses = ['pending', 'assigned', 'picked_up', 'delivered'] %}
+        {% set current_idx = statuses.index(parcel.status) if parcel.status in statuses else 0 %}
+        <div class="card" style="margin-bottom: 2rem; padding: 1.5rem;">
+            <div class="tracking-timeline">
+                <div class="timeline-step {{ 'completed' if current_idx >= 0 else '' }} {{ 'active' if current_idx == 0 else '' }}">
+                    <div class="step-icon"><i class="fas fa-file-invoice"></i></div>
+                    <div class="step-title">Order Placed</div>
+                    <div class="step-time">{{ parcel.created_at.strftime('%d %b, %H:%M') if parcel.created_at else 'Pending' }}</div>
+                </div>
+                <div class="timeline-step {{ 'completed' if current_idx >= 1 else '' }} {{ 'active' if current_idx == 1 else '' }}">
+                    <div class="step-icon"><i class="fas fa-user-check"></i></div>
+                    <div class="step-title">Partner Assigned</div>
+                    <div class="step-time">{{ parcel.assigned_at.strftime('%d %b, %H:%M') if parcel.assigned_at else 'Awaiting partner' }}</div>
+                </div>
+                <div class="timeline-step {{ 'completed' if current_idx >= 2 else '' }} {{ 'active' if current_idx == 2 else '' }}">
+                    <div class="step-icon"><i class="fas fa-truck-loading"></i></div>
+                    <div class="step-title">In Transit</div>
+                    <div class="step-time">{{ parcel.picked_up_at.strftime('%d %b, %H:%M') if parcel.picked_up_at else 'Not picked up' }}</div>
+                </div>
+                <div class="timeline-step {{ 'completed' if current_idx >= 3 else '' }} {{ 'active' if current_idx == 3 else '' }}">
+                    <div class="step-icon"><i class="fas fa-box-open"></i></div>
+                    <div class="step-title">Delivered</div>
+                    <div class="step-time">{{ parcel.delivered_at.strftime('%d %b, %H:%M') if parcel.delivered_at else 'Estimated shortly' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commuter Contact Widget (Active Orders) -->
+        {% if parcel.status in ['assigned', 'picked_up'] %}
+        <div class="card" style="margin-bottom: 2rem; padding: 1.25rem; background: #f0fdf4; border: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h4 style="color: var(--primary-green); margin: 0 0 0.25rem 0;">
+                    <i class="fas fa-user-check"></i> Assigned Commuter Partner: {{ parcel.delivery_partner_name|default('Verified Commuter') }}
+                </h4>
+                <small style="color: var(--text-muted);">Package is active in transit. You can coordinate directly with the commuter partner.</small>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <a href="tel:{{ parcel.delivery_partner_phone or '+919876543210' }}" class="btn btn-outline btn-sm">
+                    <i class="fas fa-phone text-success"></i> Call Driver
+                </a>
+                <a href="https://wa.me/{{ (parcel.delivery_partner_phone or '919876543210')|replace('+', '')|replace('-', '')|replace(' ', '') }}?text=Hi%20PathPort%20Partner%2C%20regarding%20Order%20{{ parcel.order_id }}" target="_blank" class="btn btn-success btn-sm">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Shipment Details & Route Map -->
+        <div class="card" style="padding: 1.75rem; margin-bottom: 2rem;">
+            <h3 style="color: var(--primary-green); margin-bottom: 1rem;"><i class="fas fa-route"></i> Shipment Overview</h3>
+            
+            <div class="details-grid">
+                <div class="detail-box">
+                    <h4 style="color: var(--primary-green); margin-bottom: 0.5rem;"><i class="fas fa-map-marker-alt" style="color: #27ae60;"></i> Pickup Location</h4>
+                    <p style="font-size: 1.05rem; font-weight: 500; margin: 0;">{{ parcel.pickup_location }}</p>
+                    <small style="color: var(--text-muted);">Sender: {{ parcel.sender_name }}</small>
+                </div>
+                <div class="detail-box">
+                    <h4 style="color: var(--primary-green); margin-bottom: 0.5rem;"><i class="fas fa-flag-checkered" style="color: #e74c3c;"></i> Delivery Location</h4>
+                    <p style="font-size: 1.05rem; font-weight: 500; margin: 0;">{{ parcel.delivery_location }}</p>
+                    <small style="color: var(--text-muted);">Recipient: {{ parcel.receiver_name }}</small>
+                </div>
+                <div class="detail-box">
+                    <h4 style="color: var(--primary-green); margin-bottom: 0.5rem;"><i class="fas fa-info-circle"></i> Package Specs</h4>
+                    <p style="margin: 0;"><strong>Title:</strong> {{ parcel.title }}</p>
+                    <p style="margin: 0.25rem 0;"><strong>Weight:</strong> {{ parcel.weight }} kg | <strong>Size:</strong> {{ parcel.size|title }}</p>
+                    <p style="margin: 0;"><strong>Urgency:</strong> <span class="urgency-badge urgency-{{ parcel.urgency }}">{{ parcel.urgency|title }}</span></p>
+                </div>
+                {% if parcel.image_path %}
+                <div class="detail-box" style="text-align: center;">
+                    <h4 style="color: var(--primary-green); margin-bottom: 0.5rem;"><i class="fas fa-camera"></i> Package Photo</h4>
+                    <img src="{{ url_for('static', filename=parcel.image_path) }}" alt="{{ parcel.title }}" style="max-height: 110px; max-width: 100%; border-radius: 8px; border: 1px solid #ddd; object-fit: cover;">
+                </div>
+                {% endif %}
+            </div>
+
+            <div id="trackingMap"></div>
+        </div>
+
+        <!-- Tracking Activity Log -->
+        <div class="card" style="padding: 1.75rem; margin-bottom: 2rem;">
+            <h3 style="color: var(--primary-green); margin-bottom: 1.25rem;"><i class="fas fa-history"></i> Tracking History</h3>
+            {% if parcel.tracking_history %}
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    {% for item in parcel.tracking_history|reverse %}
+                    <div style="display: flex; gap: 1.25rem; align-items: flex-start; padding-bottom: 1rem; border-bottom: 1px solid #f0f0f0;">
+                        <div style="background: var(--light-green); color: var(--primary-green); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: #333;">{{ item.description }}</div>
+                            <small style="color: var(--text-muted);">{{ item.timestamp.strftime('%d %b %Y, %I:%M %p') if item.timestamp else 'Recently' }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted);">No activity recorded yet.</p>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center;">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Track Another Parcel
+            </a>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Leaflet map initialization
+            const map = L.map('trackingMap').setView([19.0760, 72.8777], 11); // Default Mumbai coordinates
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Fetch live/estimated coordinates
+            fetch(`/api/parcel-location/{{ parcel.order_id }}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.lat && data.lng) {
+                        const marker = L.marker([data.lat, data.lng]).addTo(map)
+                            .bindPopup('<b>Current Package Location</b><br>{{ parcel.title }}').openPopup();
+                        map.setView([data.lat, data.lng], 12);
+                    }
+                })
+                .catch(err => console.error("Map error:", err));
+        });
+    </script>
+</body>
+</html>

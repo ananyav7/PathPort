@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Partner Dashboard - PathPort</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-shipping-fast"></i> PathPort</h3>
+            <p>{{ session.get('user_name', 'User') }}</p>
+            <small>Delivery Partner</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('delivery_dashboard') }}" class="active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a></li>
+            <li><a href="{{ url_for('available_parcels') }}">
+                <i class="fas fa-box-open"></i> Available Parcels
+            </a></li>
+            <li><a href="{{ url_for('verify_otp_page') }}">
+                <i class="fas fa-key"></i> Verify OTP
+            </a></li>
+            <li><a href="{{ url_for('my_routes') }}">
+                <i class="fas fa-route"></i> My Routes
+            </a></li>
+            <li><a href="{{ url_for('delivery_earnings') }}">
+                <i class="fas fa-star"></i> Points & Earnings
+            </a></li>
+            <li><a href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <!-- Mobile Topbar -->
+        <div class="mobile-topbar">
+            <a href="{{ url_for('index') }}" class="brand">
+                <i class="fas fa-shipping-fast"></i> PathPort
+            </a>
+            <button class="mobile-menu-toggle" aria-label="Toggle Navigation Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div class="dashboard-header fade-in">
+            <div class="welcome-section">
+                <h1>Welcome back, {{ session.get('user_name', 'User') }}!</h1>
+                <p>Track your active runs, accept new commuter deliveries, and manage your points</p>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">{{ session.get('user_name', 'User')[0].upper() }}</div>
+                <div>
+                    <strong>{{ session.get('user_name', 'User') }}</strong>
+                    <br><span style="color: var(--secondary-green); font-weight: bold;"><i class="fas fa-star"></i> {{ session.get('points_earned', 0)|default(0) }} Points</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="{{ url_for('available_parcels') }}" class="action-card fade-in">
+                    <div class="action-icon"><i class="fas fa-search-location"></i></div>
+                    <h3>Find Parcels</h3>
+                    <p>Browse delivery jobs matching your commute</p>
+                </a>
+                <a href="{{ url_for('verify_otp_page') }}" class="action-card fade-in">
+                    <div class="action-icon"><i class="fas fa-key"></i></div>
+                    <h3>Verify OTP</h3>
+                    <p>Confirm pickup or delivery completion</p>
+                </a>
+                <a href="{{ url_for('my_routes') }}" class="action-card fade-in">
+                    <div class="action-icon"><i class="fas fa-route"></i></div>
+                    <h3>Manage Routes</h3>
+                    <p>Update your travel pathways & schedule</p>
+                </a>
+            </div>
+
+            <!-- Stats Overview -->
+            {% set active_jobs = assigned_parcels|selectattr('status', 'in', ['assigned', 'picked_up'])|list %}
+            {% set delivered_jobs = assigned_parcels|selectattr('status', 'equalto', 'delivered')|list %}
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-truck-loading"></i></div>
+                    <div class="stat-number">{{ active_jobs|length }}</div>
+                    <div class="stat-label">Active Deliveries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-number">{{ delivered_jobs|length }}</div>
+                    <div class="stat-label">Completed Deliveries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-number">{{ session.get('points_earned', 0)|default(0) }}</div>
+                    <div class="stat-label">Total Points Earned</div>
+                </div>
+            </div>
+
+            
+            <!-- Eco-Commuter Green Miles Card -->
+            {% set partner_co2 = (delivered_jobs|length * 2.2)|round(1) %}
+            <div class="eco-champion-card fade-in">
+                <div class="eco-champion-info">
+                    <h4>
+                        <i class="fas fa-leaf" style="color: #6ee7b7;"></i>
+                        Commuter Green Miles Champion
+                        <span class="status-badge" style="background: rgba(110,231,183,0.2); color: #6ee7b7; border-color: rgba(110,231,183,0.3); font-size: 0.72rem; margin-left: 0.5rem;">
+                            {{ '🏆 Elite Eco Partner' if delivered_jobs|length >= 10 else ('🌿 Verified Green Commuter' if delivered_jobs|length >= 1 else '🌱 Commuter Onboarding') }}
+                        </span>
+                    </h4>
+                    <p>Delivering along your regular commute route prevents additional dedicated courier vehicles on congested Mumbai roads.</p>
+                </div>
+                <div class="eco-metrics-pill-group">
+                    <div class="eco-pill">
+                        <div class="eco-pill-num">{{ partner_co2 }} kg</div>
+                        <div class="eco-pill-label">CO&sup2; Prevented</div>
+                    </div>
+                    <div class="eco-pill">
+                        <div class="eco-pill-num">{{ (partner_co2 / 12)|round(1) }}</div>
+                        <div class="eco-pill-label">Trees Equivalent</div>
+                    </div>
+                    <div class="eco-pill">
+                        <div class="eco-pill-num">&#8377;{{ (session.get('points_earned', 0)|default(0)) * 10 }}</div>
+                        <div class="eco-pill-label">Est. Value (INR)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Assigned Parcels -->
+            <div class="card fade-in" style="margin-bottom: 2rem;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3><i class="fas fa-tasks"></i> Current Active Deliveries ({{ active_jobs|length }})</h3>
+                    {% if active_jobs %}
+                    <a href="{{ url_for('verify_otp_page') }}" class="btn btn-primary" style="font-size: 0.85rem;">
+                        <i class="fas fa-shield-alt"></i> Go to OTP Verification
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if active_jobs %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Title</th>
+                                    <th>Route (From &rarr; To)</th>
+                                    <th>Status</th>
+                                    <th>Reward</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for parcel in active_jobs %}
+                                <tr>
+                                    <td><strong>{{ parcel.order_id }}</strong></td>
+                                    <td>{{ parcel.title }}</td>
+                                    <td>
+                                        <small><i class="fas fa-circle" style="color: #27ae60; font-size: 0.5rem;"></i> {{ parcel.pickup_location }}</small><br>
+                                        <small><i class="fas fa-circle" style="color: #e74c3c; font-size: 0.5rem;"></i> {{ parcel.delivery_location }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ parcel.status.replace('_', '-') }}">
+                                            {{ parcel.status.replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                    <td><strong style="color: var(--primary-green);">+{{ parcel.reward_points|default(10) }} pts</strong></td>
+                                    <td>
+                                        <a href="{{ url_for('verify_otp_page') }}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                            <i class="fas fa-key"></i> Verify OTP
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 1rem; color: #ccc;"></i>
+                        <p>You have no active deliveries in progress.</p>
+                        <a href="{{ url_for('available_parcels') }}" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Browse Available Parcels
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Available Parcels Nearby / Available -->
+            <div class="card fade-in">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3><i class="fas fa-boxes"></i> Parcels Ready for Pickup ({{ available_parcels|length }})</h3>
+                    <a href="{{ url_for('available_parcels') }}" class="btn btn-secondary" style="font-size: 0.85rem;">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if available_parcels %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Package</th>
+                                    <th>Route</th>
+                                    <th>Weight / Urgency</th>
+                                    <th>Reward</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in available_parcels[:5] %}
+                                <tr>
+                                    <td><strong>{{ p.order_id }}</strong></td>
+                                    <td>{{ p.title }}</td>
+                                    <td>
+                                        <small><strong>From:</strong> {{ p.pickup_location }}</small><br>
+                                        <small><strong>To:</strong> {{ p.delivery_location }}</small>
+                                    </td>
+                                    <td>
+                                        {{ p.weight }} kg &bull;
+                                        <span class="urgency-badge urgency-{{ p.urgency }}">{{ p.urgency|title }}</span>
+                                    </td>
+                                    <td><strong style="color: var(--primary-green);">+{{ p.reward_points|default(10) }} pts</strong></td>
+                                    <td>
+                                        <button onclick="acceptParcel('{{ p._id }}')" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                            <i class="fas fa-check"></i> Accept
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                        No pending parcels at the moment. Check back soon!
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% include 'partials/pathbot.html' %}
+
+    <!-- Flash Messages (Toasts below navbar) -->
+    {% include 'partials/flash_messages.html' %}
+</body>
+</html>
