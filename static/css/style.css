@@ -3541,3 +3541,11 @@ html {
     opacity: 1;
     transform: scale(1.15);
 }
+
+/* Safety Fallback for stats-row */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
